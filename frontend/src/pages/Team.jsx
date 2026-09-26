@@ -4,7 +4,7 @@ import { Card } from '../components/Card';
 export const Team = () => {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
 
-  // Image path placeholder
+  // Placeholder image path as requested
   const defaultAvatar = './images/sandiplogo.jpg';
 
   // Full Team Roster based on official structure
@@ -149,6 +149,56 @@ export const Team = () => {
       bio: "Answering student queries, managing support desks, and community chats."
     },
 
+    // MEDIA & PRODUCTION (VIDEOGRAPHERS & VIDEO EDITORS)
+    {
+      name: "Mahesh Gaikwad",
+      role: "Videographer & Video Editor",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Capturing event coverage and producing high-quality video content and edits."
+    },
+    {
+      name: "Siddam Vaibhav",
+      role: "Videographer & Video Editor",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Managing on-field media coverage, cinematography, and post-production video editing."
+    },
+    {
+      name: "Kamsali Yashwanth",
+      role: "Videographer & Video Editor",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Handling event shoot direction, video montages, and visual storytelling."
+    },
+    {
+      name: "Rohan Kolla",
+      role: "Videographer",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Operating visual recording gear and capturing key event moments across campus."
+    },
+    {
+      name: "Chityala Manikanteswarareddy",
+      role: "Video Editor",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Executing video assembly, audio synthesis, and visual promotional edits."
+    },
+    {
+      name: "Prathmesh Patil",
+      role: "Video Editor",
+      category: "Media & Production",
+      year: "N/A",
+      branch: "N/A",
+      bio: "Designing promotional reels, teaser edits, and pitch night highlights."
+    },
+
     // SPONSORSHIP & PARTNERSHIP
     {
       name: "Tejas Adhav Patil",
@@ -177,6 +227,7 @@ export const Team = () => {
     { label: "Technical", value: "Technical" },
     { label: "Event & Marketing", value: "Event & Marketing" },
     { label: "Media & Engagement", value: "Media & Engagement" },
+    { label: "Media & Production", value: "Media & Production" },
     { label: "Sponsorship", value: "Sponsorship" }
   ];
 
@@ -198,7 +249,7 @@ export const Team = () => {
         </h1>
 
         <p className="text-slate-600 dark:text-slate-400 text-sm max-w-2xl mx-auto leading-relaxed">
-          The student leaders, technical architects, and executive advisors driving Sandip University's startup ecosystem.
+          The student leaders, technical architects, production crew, and executive advisors driving Sandip University's startup ecosystem.
         </p>
 
         {/* ================= CATEGORY FILTER BUTTONS ================= */}
