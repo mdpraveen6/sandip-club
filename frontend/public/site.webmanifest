@@ -1,0 +1,21 @@
+{
+  "name": "Sandip Entrepreneurship & Business Club",
+  "short_name": "SEBC",
+  "description": "Turn raw ideas into market-leading ventures at Sandip University.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060B09",
+  "theme_color": "#060B09",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
