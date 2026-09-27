@@ -83,7 +83,7 @@ const sprint = [
           <motion.div variants={rise} custom={0}>
             <span className="section-badge">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Sandip Entrepreneurship Club (SEC)
+              Sun Entrepreneurship Club
             </span>
           </motion.div>
 
@@ -95,12 +95,12 @@ const sprint = [
           </motion.h1>
 
           <motion.p variants={rise} custom={2} className="section-subtitle text-base sm:text-lg mt-5 max-w-xl">
-          Sandip Entrepreneurship Club (SEC) helps students turn early-stage ideas into fundable startups through hands-on guidance and seed-grant pathways.No registered company is required to join, and you retain 100% of your equity.
+            Sun Entrepreneurship Club has helped students turn early-stage ideas into fundable startup through hands-on guidance. No registered company is required to join and you retain 100% equity.
           </motion.p>
 
           <motion.div variants={rise} custom={3} className="flex flex-col sm:flex-row gap-3 mt-8">
             <Button variant="gold" onClick={() => navigateTo('register')} className="shine-wrap">
-              Submit your idea <i className="fa-solid fa-arrow-right text-xs" />
+              Apply Now <i className="fa-solid fa-arrow-right text-xs" />
             </Button>
             <Button variant="secondary" onClick={() => navigateTo('events')}>
               <i className="fa-solid fa-calendar-days text-emerald-500" /> Explore events
@@ -117,32 +117,58 @@ const sprint = [
           </motion.div>
         </div>
 
-        {/* hero visual — founder pass */}
+        {/* hero visual — ongoing event highlight */}
         <motion.div
-          initial={{ opacity: 0, y: 40, rotate: 2 }}
+          initial={{ opacity: 0, y: 40, rotate: 1 }}
           animate={{ opacity: 1, y: 0, rotate: 0 }}
           transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-5 relative"
         >
           <div className="relative mx-auto max-w-sm">
             <div className="absolute -inset-6 bg-gradient-to-br from-emerald-500/20 via-gold-500/15 to-transparent blur-2xl rounded-[32px]" />
-            <div className="relative rounded-[26px] overflow-hidden spotlight text-white noise">
+            <div className="relative rounded-[26px] overflow-hidden spotlight text-white noise border border-white/10">
               <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-gold-400 to-emerald-500 bg-[length:200%_100%] animate-gradient-x" />
               <div className="p-6 sm:p-7">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] tracking-[0.28em] text-gold-300">SEBC · FOUNDER PASS</span>
-                  <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">● VERIFIED</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Ongoing / Current Event
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.2em] text-gold-300 uppercase">FLAGSHIP</span>
                 </div>
-                <div className="mt-6">
-                  <div className="font-mono text-[10px] tracking-[0.2em] text-cream-100/50">FOUNDER</div>
-                  <div className="font-display text-2xl font-extrabold mt-1">Your Name Here</div>
-                  <div className="font-mono text-[10px] tracking-[0.2em] text-cream-100/50 mt-4">VENTURE</div>
-                  <div className="text-sm text-cream-100/90 mt-1">The idea you pitch this semester</div>
+                <div className="mt-5">
+                  <div className="font-mono text-[10px] tracking-[0.2em] text-cream-100/50 uppercase">FEATURED EVENT</div>
+                  <h3 className="font-display text-2xl font-extrabold text-cream-50 mt-1 leading-tight">
+                    Sun Launchpad <span className="text-gold-300 drop-shadow-[0_0_12px_rgba(221,184,78,0.4)]">2026</span>
+                  </h3>
+                  <p className="text-xs text-cream-100/80 mt-2 leading-relaxed font-sans">
+                    Sandip University&apos;s official student acceleration drive. Submit your idea, get hands-on guidance, and pitch on stage.
+                  </p>
                 </div>
-                <div className="gold-rule my-5 opacity-70" />
-                <div className="flex items-center justify-between font-mono text-[11px]">
-                  <span className="text-gold-300 font-bold">SEBC-2026-XXXXX</span>
-                  <span className="text-cream-100/50">ROUND 1 · NASHIK</span>
+
+                <div className="gold-rule my-4 opacity-60" />
+
+                <div className="space-y-2 font-mono text-[11px]">
+                  <div className="flex items-center justify-between py-1 border-b border-white/5">
+                    <span className="text-cream-100/50">STATUS</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Ongoing / Present Event
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-white/5">
+                    <span className="text-cream-100/50">DATES</span>
+                    <span className="text-cream-50">Dates to be announced</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-cream-100/50">VENUE</span>
+                    <span className="text-cream-50">Sandip University Campus</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-1">
+                  <Button variant="gold" onClick={() => navigateTo('register')} className="w-full !py-2.5 !text-xs font-bold shine-wrap">
+                    Apply Now <i className="fa-solid fa-arrow-right text-xs" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -153,8 +179,8 @@ const sprint = [
                 <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
                 <span className="relative inline-flex w-3 h-3 rounded-full bg-emerald-500 border-2 border-ink-950" />
               </span>
-              <span className="w-9 h-9 rounded-xl bg-gradient-brand text-white flex items-center justify-center border-glow"><i className="fa-solid fa-sack-dollar text-sm" /></span>
-              <span><span className="block font-display font-bold text-sm text-white">Upcoming Event</span><span className="block text-[11px] text-white/60">SUN LAUNCHPAD</span></span>
+              <span className="w-9 h-9 rounded-xl bg-gradient-brand text-white flex items-center justify-center border-glow"><i className="fa-solid fa-rocket text-sm" /></span>
+              <span><span className="block font-display font-bold text-sm text-white">Current Event</span><span className="block text-[11px] text-white/60">SUN LAUNCHPAD 2026</span></span>
             </motion.div>
 
             <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
@@ -163,8 +189,8 @@ const sprint = [
                 <span className="absolute inline-flex w-full h-full rounded-full bg-gold-400 opacity-75 animate-ping" />
                 <span className="relative inline-flex w-3 h-3 rounded-full bg-gold-400 border-2 border-ink-950" />
               </span>
-              <span className="w-9 h-9 rounded-xl bg-gradient-gold text-[#1A1405] flex items-center justify-center border-glow-gold"><i className="fa-solid fa-user-tie text-sm" /></span>
-              <span><span className="block font-display font-bold text-sm text-white">No.of registrations</span><span className="block text-[11px] text-white/60">20+ Teams</span></span>
+              <span className="w-9 h-9 rounded-xl bg-gradient-gold text-[#1A1405] flex items-center justify-center border-glow-gold"><i className="fa-solid fa-check-to-slot text-sm" /></span>
+              <span><span className="block font-display font-bold text-sm text-white">Registration</span><span className="block text-[11px] text-white/60">Open for Students</span></span>
             </motion.div>
           </div>
         </motion.div>

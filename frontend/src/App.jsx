@@ -9,7 +9,7 @@ import { Team } from './pages/Team';
 import { Admin } from './pages/Admin';
 import { api, getToken, clearToken } from './lib/api';
 
-import logoImg from './images/sandiplogo.jpg';
+import logoImg from './images/sandip-university-logo.jpg';
 
 const NAV = [
   { id: 'home', label: 'Home', icon: 'fa-house' },
@@ -144,22 +144,21 @@ export default function App() {
     });
   };
 
-  // Shown after Register submit: application is pending admin review.
-  // The Founder Pass itself is issued later, by email, on approval.
+  // Shown after Register submit
   const openReceiptModal = ({ name, title }) => {
     const first = String(name || '').trim().split(' ')[0];
     setModalData({
       isOpen: true,
-      title: 'Application received',
+      title: 'Registration Confirmed',
       content: (
         <div className="text-center space-y-3 py-2">
           <div className="w-14 h-14 mx-auto rounded-full bg-gradient-gold text-[#1A1405] flex items-center justify-center text-xl border-glow-gold">
-            <i className="fa-solid fa-inbox" />
+            <i className="fa-solid fa-check" />
           </div>
-          <p className="font-display font-bold">Thanks{first ? `, ${first}` : ''} — we got it.</p>
+          <p className="font-display font-bold">Welcome{first ? `, ${first}` : ''} — you&apos;re registered!</p>
           <p className="text-sm opacity-70">
-            “{title}” is now pending admin review. Your verified Founder Pass
-            arrives by email once approved.
+            “{title}” is confirmed for Sun Launchpad 2026. Your verified Founder Pass
+            will arrive by email.
           </p>
           <Button onClick={closeModal} className="w-full">Done</Button>
         </div>
@@ -185,15 +184,15 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
           <button onClick={() => handlePageChange('home')} className="flex items-center gap-3 group">
             <span className="relative">
-              <img src={logoImg} alt="SEBC logo" className="w-10 h-10 rounded-xl object-cover ring-1 ring-gold-500/40" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-cream-50 dark:border-ink-950" />
+              <img src={logoImg} alt="Sun Entrepreneurship Club logo" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover ring-1 ring-gold-500/40 shadow-sm transition-transform duration-300 group-hover:scale-105" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-cream-50 dark:border-ink-950" />
             </span>
             <span className="text-left leading-none">
               <span className="block font-display font-extrabold text-base sm:text-lg tracking-tight">
-                SEBC <span className="brand-gold">× SUN</span>
+                Sun Entrepreneurship Club
               </span>
               <span className="block font-mono text-[9px] tracking-[0.24em] uppercase opacity-60 mt-1">
-                Sandip university· Nashik
+                Sandip University · Nashik
               </span>
             </span>
           </button>
@@ -295,15 +294,15 @@ export default function App() {
         <div className="h-px bg-gradient-to-r from-transparent via-gold-500/70 to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-8 pt-12 pb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <img src={logoImg} alt="SEBC logo" className="w-11 h-11 rounded-xl object-cover ring-1 ring-gold-500/50 shadow-glow-gold" />
+            <div className="flex items-center gap-3.5">
+              <img src={logoImg} alt="Sun Entrepreneurship Club logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-1 ring-gold-500/50 shadow-glow-gold transition-transform duration-300 hover:scale-105" />
               <span>
-                <span className="block font-display font-extrabold text-xl tracking-tight">SEBC <span className="text-gold-300 drop-shadow-[0_0_10px_rgba(221,184,78,0.45)]">× SUN</span></span>
-                <span className="block font-mono text-[9px] tracking-[0.24em] uppercase text-cream-100/70 mt-1">Sandip E-Club · Nashik</span>
+                <span className="block font-display font-extrabold text-xl tracking-tight">Sun Entrepreneurship Club</span>
+                <span className="block font-mono text-[9px] tracking-[0.24em] uppercase text-cream-100/70 mt-1">Sandip University · Nashik</span>
               </span>
             </div>
             <p className="text-sm text-cream-100/80 leading-relaxed max-w-sm">
-              Sandip Entrepreneurship &amp; Business Club — turning raw student ideas into fundable ventures, on campus in Nashik.
+              Sun Entrepreneurship Club — turning raw student ideas into fundable ventures, on campus in Nashik.
             </p>
             <div className="flex gap-2">
               {['fa-x-twitter', 'fa-instagram', 'fa-linkedin-in', 'fa-youtube'].map((s) => (
@@ -324,9 +323,9 @@ export default function App() {
           </div>
 
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase text-gold-300">Program</h4>
-            {['Challenge 1 — Idea Pitch', 'Challenge 2 — Business Pitch', '7-Step Idea Sprint', 'Founder Pass'].map((t) => (
-              <button key={t} onClick={() => handlePageChange('home')} className="block text-sm text-cream-100/80 hover:text-gold-300 transition text-left">
+            <h4 className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase text-gold-300">Programs</h4>
+            {['Sun Launchpad 2026', 'Incubation Program', 'Alumni Meetup'].map((t) => (
+              <button key={t} onClick={() => handlePageChange('events')} className="block text-sm text-cream-100/80 hover:text-gold-300 transition text-left">
                 {t}
               </button>
             ))}
@@ -335,11 +334,11 @@ export default function App() {
           <div className="lg:col-span-3 space-y-4">
             <h4 className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase text-gold-300">Find Us</h4>
             <p className="text-sm text-cream-100/80 leading-relaxed">
-              S-Bulding<br />Sandip University,<br />Nashik, Maharashtra
+              Sandip University,<br />Nashik, Maharashtra
             </p>
             <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] p-4 flex items-center justify-between gap-3">
               <div>
-                <div className="font-display font-bold text-sm">2026 cohort open</div>
+                <div className="font-display font-bold text-sm">Sun Launchpad 2026 Open</div>
                 <div className="text-xs text-cream-100/70">Limited pitch slots.</div>
               </div>
               <Button variant="gold" onClick={() => handlePageChange('register')} className="!px-5 !py-2.5 !text-[11px]">Apply</Button>
@@ -348,11 +347,11 @@ export default function App() {
         </div>
         <div className="relative border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono text-cream-100/60">
-            <span>© 2026 SEBC · Sandip University. All rights reserved.</span>
+            <span>© 2026 Sun Entrepreneurship Club · Sandip University. All rights reserved.</span>
             <button onClick={() => handlePageChange('admin')} className="hover:text-gold-300 transition inline-flex items-center gap-1.5">
               <i className="fa-solid fa-lock text-[10px]" /> Admin
             </button>
-            <span>Built by the SEBC Technical Team</span>
+            <span>Built by the Sun Entrepreneurship Club Technical Team</span>
           </div>
         </div>
       </footer>

@@ -5,10 +5,11 @@ import { Button } from '../components/Button';
 import { SectionHead } from '../components/SectionHead';
 import { api } from '../lib/api';
 
-// Badge theme per status: Present = live emerald, Upcoming = gold, Completed = muted.
-const statusStyle = (status) => {
-  if (status === 'Present') return { text: 'text-emerald-600 dark:text-emerald-300', dot: 'bg-emerald-500 animate-pulse', box: 'bg-emerald-500/10 border-emerald-500/30' };
-  if (status === 'Completed') return { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', box: 'bg-slate-500/10 border-slate-500/30' };
+// Badge theme per status: Present/Ongoing = live emerald, Upcoming = gold, Completed = muted.
+const statusStyle = (status = '') => {
+  const s = status.toLowerCase();
+  if (s.includes('present') || s.includes('ongoing')) return { text: 'text-emerald-600 dark:text-emerald-300', dot: 'bg-emerald-500 animate-pulse', box: 'bg-emerald-500/10 border-emerald-500/30' };
+  if (s.includes('completed')) return { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', box: 'bg-slate-500/10 border-slate-500/30' };
   return { text: 'text-gold-600 dark:text-gold-300', dot: 'bg-gold-500', box: 'bg-gold-500/10 border-gold-500/30' };
 };
 
@@ -17,78 +18,68 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const flagship = {
-    title: 'SUN Launchpad 2026',
+    title: 'Sun Launchpad 2026',
     subtitle: "Sandip University's official student acceleration drive",
-    status: 'Dates to be announced',
+    status: 'Ongoing / Present Event',
+    dates: 'Dates to be announced',
     location: 'Sandip University Campus · SCIIE Hub, Nashik',
     grantPool: 'Up to ₹1.5 Cr seed grants',
     overview:
-      'Bring one raw idea. Leave with feedback, a mentor, a prototype plan — and a shot at non-dilutive funding. No registered company needed; an idea worth presenting is enough.',
+      'Sun Launchpad 2026 is Sandip University’s official student acceleration drive designed to turn early-stage student ideas into fundable startups through hands-on guidance. No registered company is required to join, and you retain 100% equity.',
+    steps: [
+      { num: '01', title: 'Submit Your Idea', desc: 'Fill out the 5-minute registration form with your problem statement and proposed solution.' },
+      { num: '02', title: 'Mentorship & Sprints', desc: 'Work with mentors, refine your pitch deck format, and test your business assumptions.' },
+      { num: '03', title: 'Pitch On Stage', desc: 'Present in the competition rounds for feedback, incubation access, and seed grant pathways.' },
+    ],
     rounds: [
       { num: '01', name: 'Idea & confidence pitch', focus: 'A 60-second pitch: problem, user, solution, vision. Judged on clarity and courage.' },
       { num: '02', name: 'Business & commercialization', focus: 'Full business pitch before VCs: market, unit economics, moat and roadmap.' },
     ],
   };
 
-  const fallbackEvents = [
+  const programs = [
     {
       id: 1,
-      title: 'Official Registration Drive',
-      edition: 'SUN Launchpad 2026',
-      category: 'Registration & Matchmaking',
-      status: 'Present',
-      time: 'Active now · Ongoing',
-      venue: 'SCIIE Hub, Block-B / Online',
-      desc: 'Submit your raw idea, get pitch-structure guidance, or find co-founders across departments.',
+      title: 'Sun Launchpad 2026',
+      edition: 'Sun Entrepreneurship Club',
+      category: 'Acceleration Drive',
+      status: 'Ongoing / Present Event',
+      time: 'Dates to be announced',
+      venue: 'Sandip University Campus',
+      desc: "Sandip University's flagship student acceleration drive. Submit your idea, receive mentorship, and pitch on stage.",
     },
     {
       id: 2,
-      title: 'Main Pitch Competition',
-      edition: 'SUN Launchpad 2026',
-      category: 'Pitch Competition',
+      title: 'Incubation Program',
+      edition: 'Sun Entrepreneurship Club',
+      category: 'Incubation',
       status: 'Upcoming',
       time: 'Dates to be announced',
-      venue: 'Main Auditorium, Sandip University',
-      desc: 'Round 1 confidence pitches plus Round 2 investor evaluations for seed grants.',
+      venue: 'Sandip University Campus',
+      desc: 'Structured incubation support for validated student startups, offering dedicated workspace, mentorship, and seed resources.',
+    },
+    {
+      id: 3,
+      title: 'Alumni Meetup',
+      edition: 'Sun Entrepreneurship Club',
+      category: 'Networking & Community',
+      status: 'Upcoming',
+      time: 'Dates to be announced',
+      venue: 'Sandip University Campus',
+      desc: 'Interactive networking session connecting current student founders with university alumni entrepreneurs and industry mentors.',
     },
   ];
 
-  // Live events from the admin panel; falls back to built-in list when offline.
-  const STATUS_MAP = { upcoming: 'Upcoming', ongoing: 'Present', completed: 'Completed' };
-  const fmtEvtDate = (iso) => {
-    try { return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
-    catch { return 'Dates to be announced'; }
-  };
-  const [remoteEvents, setRemoteEvents] = useState(null);
-  useEffect(() => {
-    api.eventsPublic()
-      .then((d) => setRemoteEvents(d.items.map((e) => ({
-        id: e._id,
-        title: e.title,
-        edition: e.edition || 'SEBC',
-        category: e.category,
-        status: STATUS_MAP[e.status] || 'Upcoming',
-        time: e.timeLabel || (e.eventDate ? fmtEvtDate(e.eventDate) : 'Dates to be announced'),
-        venue: e.venue || 'Sandip University',
-        desc: e.description,
-        seatsLeft: e.seatsLeft,
-        remote: true,
-      }))))
-      .catch(() => {});
-  }, []);
-  const eventsList = remoteEvents || fallbackEvents;
-
   const filters = [
     { label: 'All', value: 'ALL' },
-    { label: 'Present', value: 'Present' },
+    { label: 'Ongoing / Present', value: 'Ongoing' },
     { label: 'Upcoming', value: 'Upcoming' },
-    { label: 'Completed', value: 'Completed' },
   ];
 
   const q = search.toLowerCase();
-  const filtered = eventsList.filter(
+  const filtered = programs.filter(
     (e) =>
-      (statusFilter === 'ALL' || e.status.toLowerCase() === statusFilter.toLowerCase()) &&
+      (statusFilter === 'ALL' || e.status.toLowerCase().includes(statusFilter.toLowerCase())) &&
       (e.title.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q) || e.category.toLowerCase().includes(q))
   );
 
@@ -104,7 +95,7 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
         <h1 className="section-title font-display text-4xl sm:text-6xl font-extrabold text-balance">
           Where founders <span className="text-gradient-gold">get discovered.</span>
         </h1>
-        <p className="section-subtitle text-sm sm:text-base">Live drives and upcoming pitch stages from the Entrepreneurship & Business Club.</p>
+        <p className="section-subtitle text-sm sm:text-base">Live drives and upcoming pitch stages from the Sun Entrepreneurship Club.</p>
       </motion.section>
 
       {/* flagship */}
@@ -114,20 +105,34 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
           <div className="p-6 sm:p-10 lg:p-12">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#F6E3A6] drop-shadow-[0_0_10px_rgba(221,184,78,0.5)]">
-                <span className="relative flex w-2.5 h-2.5"><span className="absolute w-full h-full rounded-full bg-gold-400 animate-ping" /><span className="relative w-2.5 h-2.5 rounded-full bg-gold-400" /></span>
+                <span className="relative flex w-2.5 h-2.5"><span className="absolute w-full h-full rounded-full bg-emerald-400 animate-ping" /><span className="relative w-2.5 h-2.5 rounded-full bg-emerald-400" /></span>
                 Flagship · {flagship.status}
               </span>
-              <span className="font-mono text-[10px] font-bold tracking-[0.25em] px-3 py-1.5 rounded-full border border-gold-500/35 bg-gold-500/[0.1] text-gold-300">SEBC × SCIIE</span>
+              <span className="font-mono text-[10px] font-bold tracking-[0.25em] px-3 py-1.5 rounded-full border border-gold-500/35 bg-gold-500/[0.1] text-gold-300">SUN × SCIIE</span>
             </div>
 
-            <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-5 text-cream-50">SUN Launchpad <span className="text-gold-300 drop-shadow-[0_0_18px_rgba(221,184,78,0.45)]">2026</span></h2>
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-5 text-cream-50">Sun Launchpad <span className="text-gold-300 drop-shadow-[0_0_18px_rgba(221,184,78,0.45)]">2026</span></h2>
             <p className="font-mono text-xs text-emerald-300 mt-2 uppercase tracking-wider">{flagship.subtitle}</p>
-            <p className="text-cream-100/70 text-sm sm:text-base leading-relaxed mt-4 max-w-3xl">{flagship.overview}</p>
+            <p className="text-cream-100/80 text-sm sm:text-base leading-relaxed mt-4 max-w-3xl">{flagship.overview}</p>
 
-            <div className="grid sm:grid-cols-3 gap-3 mt-8 font-mono text-xs">
+            {/* What students need to do */}
+            <div className="mt-8 space-y-3">
+              <div className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-gold-300">What Students Need To Do</div>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {flagship.steps.map((st) => (
+                  <div key={st.num} className="rounded-2xl border border-white/20 bg-white/[0.05] p-4">
+                    <div className="font-display text-gold-300 font-extrabold text-sm">{st.num}</div>
+                    <div className="font-display font-bold mt-1 text-sm text-cream-50">{st.title}</div>
+                    <p className="text-xs text-cream-100/60 mt-1 leading-relaxed">{st.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-3 mt-4 font-mono text-xs">
               {[
                 { icon: 'fa-location-dot', k: 'Venue', v: flagship.location },
-                { icon: 'fa-clock', k: 'When', v: 'To be announced soon' },
+                { icon: 'fa-clock', k: 'When', v: flagship.dates },
                 { icon: 'fa-sack-dollar', k: 'Grants', v: flagship.grantPool },
               ].map((m) => (
                 <div key={m.k} className="rounded-2xl border border-white/20 bg-white/[0.06] p-4 flex gap-3">
@@ -148,11 +153,11 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
-              <Button variant="gold" onClick={() => openRsvpModal(flagship.title, 'Dates TBA', flagship.location)}>
-                <i className="fa-solid fa-bell" /> Notify me at launch
+              <Button variant="gold" onClick={() => navigateTo('register')}>
+                Apply Now <i className="fa-solid fa-arrow-right text-xs" />
               </Button>
-              <Button variant="secondary" onClick={() => navigateTo('register')} className="!text-cream-50 !border-white/20 hover:!border-emerald-400">
-                Register your idea <i className="fa-solid fa-arrow-right text-xs" />
+              <Button variant="secondary" onClick={() => openRsvpModal(flagship.title, flagship.dates, flagship.location)} className="!text-cream-50 !border-white/20 hover:!border-emerald-400">
+                <i className="fa-solid fa-bell" /> Notify me at launch
               </Button>
             </div>
           </div>
@@ -164,7 +169,7 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
         <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between glass-panel rounded-2xl p-3 sm:p-4">
           <div className="relative w-full md:w-96">
             <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-xs opacity-40" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search events, topics…"
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search programs…"
               className="field !pl-10 !rounded-xl" />
           </div>
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
@@ -183,7 +188,7 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
 
         <AnimatePresence mode="popLayout">
           {filtered.length > 0 ? (
-            <motion.div layout className="grid md:grid-cols-2 gap-5">
+            <motion.div layout className="grid md:grid-cols-3 gap-5">
               {filtered.map((e) => (
                 <motion.div key={e.id} layout initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }}>
                   <Card hover hairline className="h-full flex flex-col">
@@ -204,15 +209,12 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
                     <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-1.5 font-mono text-[11px] opacity-70">
                       <div><i className="fa-solid fa-clock mr-2 text-gold-500" />{e.time}</div>
                       <div><i className="fa-solid fa-location-dot mr-2 text-gold-500" />{e.venue}</div>
-                      {e.remote && e.seatsLeft !== null && e.seatsLeft !== undefined && (
-                        <div><i className={`fa-solid fa-ticket mr-2 ${e.seatsLeft === 0 ? 'text-rose-500' : 'text-emerald-500'}`} />{e.seatsLeft === 0 ? 'Registrations full' : `${e.seatsLeft} seats left`}</div>
-                      )}
                     </div>
                     <div className="mt-5">
-                      {e.status === 'Present' ? (
-                        <Button onClick={() => navigateTo('register')} className="w-full">Register now <i className="fa-solid fa-arrow-right text-xs" /></Button>
+                      {e.status.includes('Present') || e.status.includes('Ongoing') ? (
+                        <Button onClick={() => navigateTo('register')} className="w-full">Apply Now <i className="fa-solid fa-arrow-right text-xs" /></Button>
                       ) : (
-                        <Button variant="outline" onClick={() => openRsvpModal(e.title, e.time, e.venue, e.remote ? e.id : null)} className="w-full">Get event alert</Button>
+                        <Button variant="outline" onClick={() => openRsvpModal(e.title, e.time, e.venue, null)} className="w-full">Get event alert</Button>
                       )}
                     </div>
                   </Card>
@@ -222,8 +224,8 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
           ) : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-14 glass-panel rounded-[22px]">
               <i className="fa-solid fa-calendar-xmark text-3xl opacity-30" />
-              <h3 className="font-display font-bold mt-3 text-emerald-950 dark:text-white">No events found</h3>
-              <p className="text-sm opacity-60 font-mono mt-1">{statusFilter === 'Completed' ? 'No past events yet — check back after our first demo day.' : 'Try a different search.'}</p>
+              <h3 className="font-display font-bold mt-3 text-emerald-950 dark:text-white">No programs found</h3>
+              <p className="text-sm opacity-60 font-mono mt-1">Try a different filter or search term.</p>
             </motion.div>
           )}
         </AnimatePresence>
