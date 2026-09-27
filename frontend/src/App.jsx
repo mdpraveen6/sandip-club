@@ -193,7 +193,7 @@ export default function App() {
                 SEBC <span className="brand-gold">× SUN</span>
               </span>
               <span className="block font-mono text-[9px] tracking-[0.24em] uppercase opacity-60 mt-1">
-                Sandip E-Club · Nashik
+                Sandip university· Nashik
               </span>
             </span>
           </button>
@@ -325,7 +325,7 @@ export default function App() {
 
           <div className="lg:col-span-2 space-y-3">
             <h4 className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase text-gold-300">Program</h4>
-            {['Round 1 — Idea Pitch', 'Round 2 — Business Pitch', '7-Day Idea Sprint', 'Founder Pass'].map((t) => (
+            {['Challenge 1 — Idea Pitch', 'Challenge 2 — Business Pitch', '7-Step Idea Sprint', 'Founder Pass'].map((t) => (
               <button key={t} onClick={() => handlePageChange('home')} className="block text-sm text-cream-100/80 hover:text-gold-300 transition text-left">
                 {t}
               </button>
@@ -335,7 +335,7 @@ export default function App() {
           <div className="lg:col-span-3 space-y-4">
             <h4 className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase text-gold-300">Find Us</h4>
             <p className="text-sm text-cream-100/80 leading-relaxed">
-              SCIIE Hub, Block-B<br />Sandip University,<br />Nashik, Maharashtra
+              S-Bulding<br />Sandip University,<br />Nashik, Maharashtra
             </p>
             <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] p-4 flex items-center justify-between gap-3">
               <div>

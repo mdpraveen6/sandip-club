@@ -19,53 +19,53 @@ export const Home = ({ navigateTo }) => {
   const [openMyth, setOpenMyth] = useState(0);
 
   const stats = [
-    { val: '₹1.5Cr+', label: 'Seed grant pool' },
-    { val: '50+', label: 'Ventures incubated' },
-    { val: '75+', label: 'Mentors & judges' },
+    { val: 'IDEATION', label: 'Turn problems into ideas' },
+    { val: 'GUIDANCE', label: 'Learn from entrepreneurs' },
+    { val: 'BUILDING', label: 'Turn ideas into ventures' },
     { val: '100%', label: 'Equity you keep' },
   ];
 
   const marquee = [
-    'SUN Launchpad 2026', 'Seed Grants', '1:1 VC Mentorship', 'Prototyping Labs',
-    'Founder Pass', 'Pitch Nights', 'Zero Equity Taken', 'SCIIE Incubation',
+    'TECH', 'HEALTH', 'FARMING', 'COMMERCE',
+    'LEARNING', 'AUTOMATION', 'LOGISTICS', 'ROBOTICS',
   ];
 
   const pillars = [
-    { n: '01', icon: 'fa-lightbulb', title: 'Innovate', desc: 'A guided sprint that turns everyday campus frustrations into sharp, testable problem statements.', tags: ['Idea sprint', 'Problem labs'] },
-    { n: '02', icon: 'fa-gears', title: 'Incubate', desc: 'Non-dilutive grants, SCIIE prototyping labs and weekly mentor reviews that turn drafts into demos.', tags: ['Seed grants', 'Build support'] },
+    { n: '01', icon: 'fa-lightbulb', title: 'Innovate', desc: 'Turn everyday challenges into meaningful opportunities by identifying real problems, exploring fresh ideas, and shaping them into clear, testable solutions.', tags: ['Idea sprint', 'Realwolrd Solutions'] },
+    { n: '02', icon: 'fa-gears', title: 'Build', desc: 'Turn promising ideas into practical solutions through expert mentorship, prototyping support, resources, and continuous guidance.', tags: ['Mentorship', 'Prototyping'] },
     { n: '03', icon: 'fa-rocket', title: 'Launch', desc: 'Pitch to real investors on a real stage. Graduate with a venture, a network and a founder identity.', tags: ['Demo day', 'Funding'] },
   ];
 
   const advantages = [
-    { title: 'Recognised incubation channel', desc: 'Apply through an official university pipeline — with documentation, compliance and grant procedures handled for you.', icon: 'fa-building-columns' },
-    { title: 'Build rooms, not just classrooms', desc: 'SCIIE labs for hardware, IoT and robotics, plus mentor-led build weekends to ship your first prototype.', icon: 'fa-microchip' },
-    { title: 'A 250-acre test market', desc: 'Pilot with hostels, canteens and classrooms — thousands of real users before you ever spend on ads.', icon: 'fa-flask' },
+    { title: "Learn from people who've built", desc: 'Connect with entrepreneurs, mentors, and industry professionals who can help you understand what it takes to turn an idea into reality.', icon: 'fa-building-columns' },
+    { title: 'Build beyond the classroom', desc: 'Work with like-minded students, develop your ideas, test your assumptions, and turn concepts into practical projects.', icon: 'fa-microchip' },
+    { title: 'A community that moves with you', desc: 'Find teammates, collaborators, opportunities, and a supportive community to help you take your next step.', icon: 'fa-flask' },
   ];
 
   const myths = [
-    { tag: 'No company needed', q: 'Do I need a registered startup to apply?', a: 'No. Round 1 is designed for raw ideas — a clear problem, a proposed solution and the courage to pitch for 60 seconds. Registration, compliance and grants come later, with our help.' },
-    { tag: 'Solo friendly', q: 'What if I have no team or technical co-founder?', a: 'Pitch solo. If you want a crew, our matchmaking desk pairs you with builders across engineering, management, pharmacy and design.' },
-    { tag: 'Idea-stage ready', q: 'Do I need a finished product or prototype?', a: 'No. Round 1 judges clarity of thought, not polish. Prototyping labs and mentor builds unlock in Round 2 for shortlisted teams.' },
+    { tag: 'NO EXPERIENCE', q: "Never started a business?", a: "You don't need experience to get started. Learn the fundamentals, explore your ideas, work with a community of builders, and take your first step into entrepreneurship." },
+    { tag: 'NO TEAM', q: "What if I don't have a team?", a: "That's exactly what the club is for. Meet like-minded students, find people with complementary skills, build connections, and form a team around ideas worth exploring." },
+    { tag: 'NO PERFECT IDEA', q: "What if I don't have a perfect idea yet?", a: "You don't need one to begin. Start with curiosity, explore real-world problems, and learn to spot opportunities. The right idea can take shape as you learn, experiment, and build together." },
   ];
 
-  const sprint = [
-    { day: 1, title: 'Find the problem', task: 'Write down 3 frustrations you faced this week — in hostels, classes or commute.' },
-    { day: 2, title: 'Name your user', task: 'Pick one person who feels this pain daily. Give them a name, age and routine.' },
-    { day: 3, title: 'Sketch the fix', task: 'Describe the simplest possible solution in two sentences. No tech jargon.' },
-    { day: 4, title: 'Study workarounds', task: 'List how people solve this today — and why your way is 10x better.' },
-    { day: 5, title: 'Follow the money', task: 'Who pays, who benefits, and how does this sustain itself? Answer in one line each.' },
-    { day: 6, title: 'Talk to 5 humans', task: 'Ask five classmates about the problem. Note exact quotes — bring them to your pitch.' },
-    { day: 7, title: 'Pitch in 60 seconds', task: 'Problem → user → solution → vision. Record yourself, trim to one minute, submit.' },
-  ];
+const sprint = [
+  { step: 1, title: 'Find the problem', task: 'Write down 3 frustrations you faced this week — in hostels, classes or commute.' },
+  { step: 2, title: 'Name your user', task: 'Pick one person who feels this pain daily. Give them a name, age and routine.' },
+  { step: 3, title: 'Sketch the fix', task: 'Describe the simplest possible solution in two sentences. No tech jargon.' },
+  { step: 4, title: 'Study workarounds', task: 'List how people solve this today — and why your way is 10x better.' },
+  { step: 5, title: 'Follow the money', task: 'Who pays, who benefits, and how does this sustain itself? Answer in one line each.' },
+  { step: 6, title: 'Talk to 5 humans', task: 'Ask five classmates about the problem. Note exact quotes — bring them to your pitch.' },
+  { step: 7, title: 'Pitch in 60 seconds', task: 'Problem → user → solution → vision. Record yourself, trim to one minute, submit.' },
+];
 
   const outcomes = [
-    { icon: 'fa-id-card', title: 'Verified Founder Pass', desc: 'A credential that opens mentor rooms, labs and pitch stages.' },
-    { icon: 'fa-file-powerpoint', title: 'Investor-ready narrative', desc: 'Leave with a tight 60-second pitch and a structured deck outline.' },
-    { icon: 'fa-handshake', title: 'Mentors + lab access', desc: 'Weekly reviews with operators and hands-on prototype support.' },
-    { icon: 'fa-sack-dollar', title: 'Grant eligibility', desc: 'Shortlisted teams unlock non-dilutive seed funding pathways.' },
+    { icon: 'fa-id-card', title: 'Founder Mindset', desc: 'Build the confidence to think like an entrepreneur, identify opportunities, and take action.' },
+    { icon: 'fa-file-powerpoint', title: 'Idea to Action', desc: 'Learn how to turn a simple idea into a clear, structured and practical concept.' },
+    { icon: 'fa-handshake', title: 'Mentorship & Feedback', desc: 'Get guidance, feedback and perspectives to help you improve your idea at every stage.' },
+    { icon: 'fa-sack-dollar', title: 'Founders Journey', desc: 'Your Entrepreneurial Roadmap Leave with a clearer direction for what to learn, what to build and what to do next.' },
   ];
 
-  const day = sprint[activeSprintDay - 1];
+  const step = sprint[activeSprintDay - 1];
 
   return (
     <div className="relative">
@@ -83,7 +83,7 @@ export const Home = ({ navigateTo }) => {
           <motion.div variants={rise} custom={0}>
             <span className="section-badge">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Admissions open · SUN Launchpad 2026
+              Sandip Entrepreneurship Club (SEC)
             </span>
           </motion.div>
 
@@ -95,9 +95,7 @@ export const Home = ({ navigateTo }) => {
           </motion.h1>
 
           <motion.p variants={rise} custom={2} className="section-subtitle text-base sm:text-lg mt-5 max-w-xl">
-            SEBC is Sandip University&apos;s founder track — a 7-day idea sprint, two pitch rounds and
-            seed-grant pathways that take you from a rough thought to a fundable venture. No company
-            required. No equity taken.
+          Sandip Entrepreneurship Club (SEC) helps students turn early-stage ideas into fundable startups through hands-on guidance and seed-grant pathways.No registered company is required to join, and you retain 100% of your equity.
           </motion.p>
 
           <motion.div variants={rise} custom={3} className="flex flex-col sm:flex-row gap-3 mt-8">
@@ -156,7 +154,7 @@ export const Home = ({ navigateTo }) => {
                 <span className="relative inline-flex w-3 h-3 rounded-full bg-emerald-500 border-2 border-ink-950" />
               </span>
               <span className="w-9 h-9 rounded-xl bg-gradient-brand text-white flex items-center justify-center border-glow"><i className="fa-solid fa-sack-dollar text-sm" /></span>
-              <span><span className="block font-display font-bold text-sm text-white">Grant eligible</span><span className="block text-[11px] text-white/60">up to ₹1.5 Cr pool</span></span>
+              <span><span className="block font-display font-bold text-sm text-white">Upcoming Event</span><span className="block text-[11px] text-white/60">SUN LAUNCHPAD</span></span>
             </motion.div>
 
             <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
@@ -166,7 +164,7 @@ export const Home = ({ navigateTo }) => {
                 <span className="relative inline-flex w-3 h-3 rounded-full bg-gold-400 border-2 border-ink-950" />
               </span>
               <span className="w-9 h-9 rounded-xl bg-gradient-gold text-[#1A1405] flex items-center justify-center border-glow-gold"><i className="fa-solid fa-user-tie text-sm" /></span>
-              <span><span className="block font-display font-bold text-sm text-white">Mentor matched</span><span className="block text-[11px] text-white/60">1:1 reviews weekly</span></span>
+              <span><span className="block font-display font-bold text-sm text-white">No.of registrations</span><span className="block text-[11px] text-white/60">20+ Teams</span></span>
             </motion.div>
           </div>
         </motion.div>
@@ -191,8 +189,8 @@ export const Home = ({ navigateTo }) => {
       {/* ============ PILLARS ============ */}
       <section className="pt-20 sm:pt-24 space-y-10">
         <SectionHead index="01" eyebrow="How it works"
-          title={<>From classroom to company in <span className="text-gradient-gold">three moves.</span></>}
-          sub="A tight, guided program — not another seminar club. Every week moves your idea closer to revenue or funding." />
+          title={<>From Idea&apos;s To <span className="text-gradient-gold">Impact</span></>}
+          sub="Every great venture starts with a thought. We give you the community, guidance, and platform to turn that thought into something real." />
         <div className="grid md:grid-cols-3 gap-5">
           {pillars.map((p, i) => (
             <motion.div key={p.n} initial={{ opacity: 0, y: 26 }} whileInView={{ opacity: 1, y: 0 }}
@@ -222,8 +220,8 @@ export const Home = ({ navigateTo }) => {
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28 space-y-5">
             <SectionHead align="left" index="02" eyebrow="Why Sandip"
-              title={<>An unfair advantage, <span className="text-gradient">built into campus.</span></>}
-              sub="A 250-acre university in Nashik wired for builders — recognised incubation, real labs and a living test market outside your hostel door." />
+              title={<>More Than a Club.<br></br>A Launchpad for your <span className="text-gradient">Ideas, Innovation & Impact.</span></>}
+              sub="Sandip University combines advanced infrastructure, hands-on learning, industry connections, and entrepreneurship support to help students turn ideas into real-world solutions." />
             <Button variant="gold" onClick={() => navigateTo('register')}>
               Claim your spot <i className="fa-solid fa-arrow-right text-xs" />
             </Button>
@@ -252,8 +250,8 @@ export const Home = ({ navigateTo }) => {
       {/* ============ MYTHS ============ */}
       <section className="pt-20 sm:pt-24 space-y-10">
         <SectionHead index="03" eyebrow="First-timer friendly"
-          title={<>Nervous? <span className="text-gradient-gold">Good. Start here.</span></>}
-          sub="Three fears stop most students from applying. All three are wrong." />
+          title={<>New to Entrepreneurship?<span className="text-gradient-gold">Good, Start here.</span></>}
+          sub="You don't need experience, a startup, or a perfect idea to get started." />
         <div className="max-w-3xl mx-auto space-y-3">
           {myths.map((m, i) => {
             const open = openMyth === i;
@@ -285,54 +283,71 @@ export const Home = ({ navigateTo }) => {
       </section>
 
       {/* ============ SPRINT ============ */}
-      <section className="pt-20 sm:pt-24 space-y-8">
-        <SectionHead index="04" eyebrow="The on-ramp"
-          title={<>Your first 7 days <span className="text-gradient">as a founder.</span></>}
-          sub="A guided challenge for each day. Finish all seven and your Round 1 pitch practically writes itself." />
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide justify-start lg:justify-center">
-          {sprint.map((s) => (
-            <button key={s.day} onClick={() => setActiveSprintDay(s.day)}
-              className={`shrink-0 px-4 py-2.5 rounded-full font-mono text-xs font-bold transition border ${
-                activeSprintDay === s.day
-                  ? 'bg-ink-950 text-cream-50 border-ink-950 dark:bg-gold-400 dark:text-[#1A1405] dark:border-gold-400 shadow-card dark:shadow-glow-gold day-pill-active'
-                  : 'glass-panel text-slate-500 dark:text-cream-100/75 opacity-80 hover:opacity-100 hover:text-emerald-950 dark:hover:text-white lux-pill'
-              }`}>
-              Day {s.day}
-            </button>
-          ))}
-        </div>
-        <Card hairline className="max-w-4xl mx-auto !p-7 sm:!p-9">
-          <AnimatePresence mode="wait">
-            <motion.div key={activeSprintDay} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.32 }}
-              className="flex flex-col md:flex-row md:items-center gap-6 justify-between">
-              <div className="space-y-3 max-w-2xl">
-                <div className="flex items-center gap-3">
-                  <span className="font-display text-5xl font-extrabold text-gradient-gold">0{day.day}</span>
-                  <div>
-                    <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">Today&apos;s mission</div>
-                    <h3 className="font-display text-xl font-bold text-emerald-950 dark:text-white">{day.title}</h3>
-                  </div>
-                </div>
-                <p className="section-subtitle text-sm sm:text-base">{day.task}</p>
-                <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                  <motion.div className="h-full bg-gradient-gold rounded-full" animate={{ width: `${(day.day / 7) * 100}%` }} transition={{ duration: 0.4 }} />
-                </div>
-              </div>
-              <Button variant="gold" onClick={() => navigateTo('register')} className="shrink-0">
-                Start Day {day.day} <i className="fa-solid fa-arrow-right text-xs" />
-              </Button>
-            </motion.div>
-          </AnimatePresence>
-        </Card>
+      <section className="pt-20 sm:pt-24 space-y-8"> 
+        <SectionHead index="04" eyebrow="The on-ramp" 
+          title={<>Your first 7 steps <span className="text-gradient">as an Entrepreneur.</span></>} 
+          sub="Your seven-step journey from identifying a real problem to shaping an idea ready to be explored, tested, and built." /> 
+
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide justify-start lg:justify-center"> 
+          {sprint.map((s) => ( 
+            <button key={s.step} onClick={() => setActiveSprintDay(s.step)} 
+              className={`shrink-0 px-4 py-2.5 rounded-full font-mono text-xs font-bold transition border ${ 
+                activeSprintDay === s.step 
+                  ? 'bg-ink-950 text-cream-50 border-ink-950 dark:bg-gold-400 dark:text-[#1A1405] dark:border-gold-400 shadow-card dark:shadow-glow-gold day-pill-active' 
+                  : 'glass-panel text-slate-500 dark:text-cream-100/75 opacity-80 hover:opacity-100 hover:text-emerald-950 dark:hover:text-white lux-pill' 
+              }`}> 
+              Step {s.step} 
+            </button> 
+          ))} 
+        </div> 
+
+        <Card hairline className="max-w-4xl mx-auto !p-7 sm:!p-9"> 
+          <AnimatePresence mode="wait"> 
+            <motion.div key={activeSprintDay} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.32 }} 
+              className="flex flex-col md:flex-row md:items-center gap-6 justify-between"> 
+
+              <div className="space-y-3 max-w-2xl"> 
+                <div className="flex items-center gap-3"> 
+                  <span className="font-display text-5xl font-extrabold text-gradient-gold">0{step.step}</span> 
+
+                  <div> 
+                    <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">
+                      Today&apos;s mission
+                    </div> 
+
+                    <h3 className="font-display text-xl font-bold text-emerald-950 dark:text-white">
+                      {step.title}
+                    </h3> 
+                  </div> 
+                </div> 
+
+                <p className="section-subtitle text-sm sm:text-base">{step.task}</p> 
+
+                <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden"> 
+                  <motion.div 
+                    className="h-full bg-gradient-gold rounded-full" 
+                    animate={{ width: `${(step.step / 7) * 100}%` }} 
+                    transition={{ duration: 0.4 }} 
+                  /> 
+                </div> 
+              </div> 
+
+              <Button variant="gold" onClick={() => navigateTo('register')} className="shrink-0"> 
+                Start Step {step.step} <i className="fa-solid fa-arrow-right text-xs" /> 
+              </Button> 
+
+            </motion.div> 
+          </AnimatePresence> 
+        </Card> 
       </section>
 
       {/* ============ ROADMAP ============ */}
       <section className="pt-20 sm:pt-24 space-y-8">
         <SectionHead index="05" eyebrow="The program"
-          title={<>Two rounds. <span className="text-gradient-gold">One founder.</span></>}
-          sub="Round 1 rewards clarity and courage. Round 2 rewards economics and execution." />
+          title={<>One journey. <span className="text-gradient-gold">Endless possibilities.</span></>}
+          sub="From discovering opportunities to developing ideas and finding your place in the world of entrepreneurship." />
         <div className="flex justify-center gap-2">
-          {[{ id: 'round1', l: 'Round 1 · Idea' }, { id: 'round2', l: 'Round 2 · Business' }].map((t) => (
+          {[{ id: 'round1', l: 'Challenge 1 - Shape the Idea' }, { id: 'round2', l: 'Challenge 2 - Build the Business' }].map((t) => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
               className={`px-6 py-3 rounded-full font-display text-[13px] font-bold transition border ${
                 activeTab === t.id
@@ -349,10 +364,10 @@ export const Home = ({ navigateTo }) => {
               <motion.div key="r1" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.32 }}
                 className="grid md:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
-                  <span className="inline-block font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">60-second pitch · Everyone welcome</span>
-                  <h3 className="font-display text-2xl font-bold text-emerald-950 dark:text-white">Answer four questions. That&apos;s the whole round.</h3>
+                  <span className="inline-block font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Turn a problem into an opportunity.</span>
+                  <h3 className="font-display text-2xl font-bold text-emerald-950 dark:text-white">Start with a problem. Leave with a direction.</h3>
                   <ul className="space-y-2.5 text-sm section-subtitle">
-                    {['What problem are you solving?', 'Who feels it every day?', 'What is your proposed fix?', 'Why does it matter now?'].map((q) => (
+                    {['Turn a problem into an opportunity.', 'Identify a real problem', 'Understand who faces it', 'Develop your solution'].map((q) => (
                       <li key={q} className="flex gap-2.5"><i className="fa-solid fa-circle-check text-emerald-500 mt-0.5" /> {q}</li>
                     ))}
                   </ul>
@@ -367,18 +382,18 @@ export const Home = ({ navigateTo }) => {
               <motion.div key="r2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.32 }}
                 className="grid md:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
-                  <span className="inline-block font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-gold-500/10 text-gold-700 dark:text-gold-300 border border-gold-500/30">Investor panel · Shortlisted teams</span>
-                  <h3 className="font-display text-2xl font-bold text-emerald-950 dark:text-white">Prove it&apos;s a business, not just an idea.</h3>
+                  <span className="inline-block font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full bg-gold-500/10 text-gold-700 dark:text-gold-300 border border-gold-500/30">Turn your opportunity into a business plan.</span>
+                  <h3 className="font-display text-2xl font-bold text-emerald-950 dark:text-white">Move from “What if?” to “How will we make it work?”</h3>
                   <ul className="space-y-2.5 text-sm section-subtitle">
-                    {['Market size & who pays first', 'Revenue model & unit economics', 'Moat: why you win', 'Prototype + 6-month roadmap'].map((q) => (
+                    {['Understand your market', 'Define your business model', 'Test your assumptions', 'Create a practical growth roadmap'].map((q) => (
                       <li key={q} className="flex gap-2.5"><i className="fa-solid fa-circle-check text-gold-500 mt-0.5" /> {q}</li>
                     ))}
                   </ul>
                 </div>
                 <div className="rounded-2xl p-6 bg-gradient-brand text-white border-glow relative overflow-hidden">
-                  <div className="font-mono text-[10px] tracking-[0.25em] text-white/70">WHAT WINNERS UNLOCK</div>
-                  <p className="font-display text-lg leading-snug mt-3">Prototyping credits, weekly VC mentorship and eligibility for non-dilutive seed grants.</p>
-                  <div className="font-display text-3xl font-extrabold mt-3">₹1.5Cr+ <span className="text-sm font-sans font-medium opacity-80">grant pool</span></div>
+                  <div className="font-mono text-[10px] tracking-[0.25em] text-white/70">WHAT YOU TAKE FORWARD</div>
+                  <p className="font-display text-lg leading-snug mt-3">Tools, guidance & confidence to keep building.Leave with more than an idea — leave ready to build.</p>
+                  <div className="font-display text-3xl font-extrabold mt-3">100% <span className="text-sm font-sans font-medium opacity-80">HANDS-ON</span></div>
                 </div>
               </motion.div>
             )}
@@ -413,7 +428,7 @@ export const Home = ({ navigateTo }) => {
           <div className="relative grid lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8">
               <div className="font-mono text-[11px] font-bold tracking-[0.25em] uppercase opacity-70">2026 cohort · Limited pitch slots</div>
-              <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 text-balance">Your idea is the only entry ticket you need.</h2>
+              <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 text-balance">Your idea is where the journey begins.</h2>
               <p className="mt-3 text-sm sm:text-base opacity-75 max-w-xl">Register in five minutes. Get your verified Founder Pass instantly and walk into Round 1 ready.</p>
             </div>
             <div className="lg:col-span-4 flex flex-col gap-3">
