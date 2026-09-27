@@ -1,7 +1,7 @@
 // Central API client. Base URL comes from frontend/.env (VITE_API_URL).
 // Every public page uses try/catch around these and falls back to local content,
 // so the site works fully even when the backend is offline.
-const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '/';
 const TOKEN_KEY = 'sebc_admin_token';
 
 export const apiBase = BASE;
