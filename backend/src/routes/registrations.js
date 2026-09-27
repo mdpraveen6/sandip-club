@@ -36,10 +36,14 @@ router.post('/', async (req, res) => {
       solutionOverview: String(req.body.solutionOverview),
       pitchDeckUrl: String(req.body.pitchDeckUrl || '').trim(),
     });
-    try {
-      const viewers = await AdminUser.find({ role: 'admin', isActive: true, 'permissions.registrations.view': true }).select('email').lean();
-      sendNewRegistrationAlert(doc, viewers.map((v) => v.email)).catch(() => {});
-    } catch {}
+    (async () => {
+      try {
+        const viewers = await AdminUser.find({ role: 'admin', isActive: true, 'permissions.registrations.view': true }).select('email').lean();
+        const r = await sendNewRegistrationAlert(doc, viewers.map((v) => v.email));
+        if (r.sent) console.log(`[mail] registration alert sent (${doc.email})`);
+        else console.warn(`[mail] registration alert skipped: ${r.error}`);
+      } catch (e) { console.warn('[mail] registration alert failed:', e.message); }
+    })();
     logAudit({ actor: doc.email, role: 'applicant', action: 'create', entity: 'registration', entityId: String(doc._id), summary: `${doc.fullName} — ${doc.ideaTitle}` }).catch(() => {});
     return res.status(201).json({ ok: true, registration: doc });
   } catch (err) {

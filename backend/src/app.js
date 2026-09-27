@@ -12,8 +12,11 @@ const auditRoutes = require('./routes/audit');
 
 const app = express();
 
-const origins = String(process.env.FRONTEND_URL || '')
-  .split(',')
+// Allowed browser origins (CORS). FRONTEND_URL + CORS_ORIGINS are merged,
+// both accept comma-separated lists — set them in Vercel dashboard for deploys.
+const origins = [process.env.FRONTEND_URL, process.env.CORS_ORIGINS]
+  .filter(Boolean)
+  .flatMap((s) => String(s).split(','))
   .map((s) => s.trim())
   .filter(Boolean);
 
