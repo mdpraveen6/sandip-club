@@ -4,6 +4,68 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { api, photoUrl } from '../lib/api';
 
+// Local team member photo imports from frontend/src/images/team/
+import rishiImg from '../images/team/RISHI KUMAR MISHRA.jpg';
+import atulImg from '../images/team/Atul Sahane.jpg';
+import sauravImg from '../images/team/Saurav jha.jpg';
+import maksudImg from '../images/team/Shaik Maksud Ahmad.jpg';
+import jahanImg from '../images/team/Jahan Ara khan.jpg';
+import praveenImg from '../images/team/M.D Praveen.jpg';
+import ashirwadImg from '../images/team/Ashirwad Deshmukh.png';
+import jayeshImg from '../images/team/Jayesh Ranjit Patil.jpg';
+import darshanaImg from '../images/team/Darshana kushwaha.jpg';
+import manishImg from '../images/team/Manish patil.jpg';
+import aparnaImg from '../images/team/Aparna Sambhari.jpg';
+import ankitImg from '../images/team/Ankit tiwari.jpg';
+import mansiImg from '../images/team/mansi nikumbh.jpg';
+import pratimaImg from '../images/team/Pratima.png';
+import komalSonawaneImg from '../images/team/Komal Sonawane.jpg';
+import siddamImg from '../images/team/Siddam Vaibhav.jpg';
+import rohanImg from '../images/team/Rohan kolla.jpg';
+import tejasImg from '../images/team/Tejas Adhav Patil.jpg';
+import yashImg from '../images/team/Yash dange.jpg';
+import prathameshImg from '../images/team/Prathamesh patil.jpg';
+
+// Confident name-to-image mapping
+const LOCAL_PHOTOS = {
+  'rishi kumar mishra': rishiImg,
+  'atul sahane': atulImg,
+  'saurav jha': sauravImg,
+  'shaik maksud ahmad': maksudImg,
+  'jahan ara khan': jahanImg,
+  'm.d. praveen': praveenImg,
+  'm.d praveen': praveenImg,
+  'ashirwad deshmukh': ashirwadImg,
+  'jayesh ranjit patil': jayeshImg,
+  'darshana kushwaha': darshanaImg,
+  'manish patil': manishImg,
+  'aparna sambhari': aparnaImg,
+  'ankit tiwari': ankitImg,
+  'mansi nikumbh': mansiImg,
+  'pratima': pratimaImg,
+  'komal sonawane': komalSonawaneImg,
+  'siddam vaibhav': siddamImg,
+  'rohan kolla': rohanImg,
+  'tejas adhav patil': tejasImg,
+  'yash dange': yashImg,
+  'prathmesh patil': prathameshImg,
+  'prathamesh patil': prathameshImg,
+};
+
+// Custom focal positioning so faces are naturally framed across portrait & standing photos
+const PHOTO_POSITIONS = {
+  'ankit tiwari': 'object-[center_10%]',
+  'komal sonawane': 'object-[center_12%]',
+  'jahan ara khan': 'object-[center_35%]',
+  'shaik maksud ahmad': 'object-[center_45%]',
+  'tejas adhav patil': 'object-[center_45%]',
+  'm.d. praveen': 'object-[center_45%]',
+  'm.d praveen': 'object-[center_45%]',
+  'siddam vaibhav': 'object-center',
+  'prathmesh patil': 'object-[center_18%]',
+  'prathamesh patil': 'object-[center_18%]',
+};
+
 const socialIcon = (label = '') => {
   const l = label.toLowerCase();
   if (l.includes('linkedin')) return 'fa-brands fa-linkedin-in';
@@ -118,44 +180,97 @@ export const Team = ({ navigateTo }) => {
 
   const initials = (n) => n.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
-  const renderMemberCard = (m) => (
-    <motion.div key={m.name} layout initial={{ opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.32 }}>
-      <Card hover hairline className="h-full">
-        <div className="flex items-start gap-4">
-          {m.photoUrl ? (
-            <img src={photoUrl(m.photoUrl)} alt={m.name} className="shrink-0 w-14 h-14 rounded-2xl object-cover border border-gold-500/40 shadow-card" />
-          ) : (
-            <span className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-brand text-white font-display font-extrabold flex items-center justify-center border-glow">{initials(m.name)}</span>
-          )}
-          <div className="min-w-0">
-            <h3 className="font-display font-bold leading-tight truncate text-emerald-950 dark:text-white">{m.name}</h3>
-            <div className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-gold-600 dark:text-gold-300 mt-1">{m.role}</div>
+  const getMemberPhoto = (m) => {
+    if (m.photoUrl) return photoUrl(m.photoUrl);
+    const norm = (m.name || '').toLowerCase().trim();
+    return LOCAL_PHOTOS[norm] || null;
+  };
+
+  const getPhotoPosition = (m) => {
+    const norm = (m.name || '').toLowerCase().trim();
+    return PHOTO_POSITIONS[norm] || 'object-top';
+  };
+
+  const renderMemberCard = (m) => {
+    const photo = getMemberPhoto(m);
+    const posClass = getPhotoPosition(m);
+
+    return (
+      <motion.div
+        key={m.name}
+        layout
+        initial={{ opacity: 0, y: 22, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.32 }}
+      >
+        <Card hover hairline className="h-full flex flex-col">
+          {/* Prominent Photo Showcase */}
+          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/[0.04] dark:bg-white/[0.04] border border-black/10 dark:border-white/10 mb-5 group/img shrink-0">
+            {photo ? (
+              <img
+                src={photo}
+                alt={m.name}
+                className={`w-full h-full object-cover ${posClass} transition-transform duration-500 group-hover:scale-105`}
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 via-gold-500/10 to-transparent">
+                <span className="w-16 h-16 rounded-2xl bg-gradient-brand text-white font-display font-extrabold text-2xl flex items-center justify-center border-glow shadow-card">
+                  {initials(m.name)}
+                </span>
+                <span className="font-mono text-[10px] tracking-[0.2em] text-gold-500 uppercase mt-2.5 opacity-80">
+                  Team Member
+                </span>
+              </div>
+            )}
           </div>
-        </div>
-        <p className="text-sm section-subtitle mt-4">{m.bio}</p>
-        <div className="flex flex-wrap gap-2 mt-4 font-mono text-[10px] font-bold">
-          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">{m.year}</span>
-          <span className="px-2.5 py-1 rounded-full border border-black/10 dark:border-white/15 opacity-70 max-w-full truncate" title={m.branch}>{m.branch}</span>
-        </div>
-        {(m.tags || []).length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {m.tags.map((t) => (
-              <span key={t} className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">{t}</span>
-            ))}
+
+          {/* Member Details */}
+          <div className="flex-grow flex flex-col">
+            <h3 className="font-display font-bold text-lg sm:text-xl leading-tight text-emerald-950 dark:text-white truncate" title={m.name}>
+              {m.name}
+            </h3>
+            <div className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-gold-600 dark:text-gold-300 mt-1">
+              {m.role}
+            </div>
+            <p className="text-sm section-subtitle mt-3 leading-relaxed flex-grow">
+              {m.bio}
+            </p>
+
+            <div className="flex flex-wrap gap-2 mt-4 pt-3.5 border-t border-black/10 dark:border-white/10 font-mono text-[10px] font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                {m.year}
+              </span>
+              <span className="px-2.5 py-1 rounded-full border border-black/10 dark:border-white/15 opacity-70 max-w-full truncate" title={m.branch}>
+                {m.branch}
+              </span>
+            </div>
+
+            {(m.tags || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {m.tags.map((t) => (
+                  <span key={t} className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {(m.socials || []).length > 0 && (
+              <div className="flex gap-4 mt-3 text-sm opacity-70">
+                {m.socials.map((s, i) => (
+                  <a key={i} href={s.url} target="_blank" rel="noreferrer" title={s.label} className="hover:text-gold-500 hover:opacity-100 transition">
+                    <i className={socialIcon(s.label)} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-        {(m.socials || []).length > 0 && (
-          <div className="flex gap-4 mt-3 text-sm opacity-70">
-            {m.socials.map((s, i) => (
-              <a key={i} href={s.url} target="_blank" rel="noreferrer" title={s.label} className="hover:text-gold-500 hover:opacity-100 transition">
-                <i className={socialIcon(s.label)} />
-              </a>
-            ))}
-          </div>
-        )}
-      </Card>
-    </motion.div>
-  );
+        </Card>
+      </motion.div>
+    );
+  };
 
   return (
     <div className="relative">
@@ -202,7 +317,7 @@ export const Team = ({ navigateTo }) => {
                 Directing strategic vision, administration, compliance, and institutional allocations.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
                 {governingMembers.map(renderMemberCard)}
               </AnimatePresence>
@@ -219,7 +334,7 @@ export const Team = ({ navigateTo }) => {
                 Faculty Coordinator
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
                 {facultyMembers.map(renderMemberCard)}
               </AnimatePresence>
@@ -236,7 +351,7 @@ export const Team = ({ navigateTo }) => {
                 Club Advisor
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
                 {advisorMembers.map(renderMemberCard)}
               </AnimatePresence>
@@ -261,7 +376,7 @@ export const Team = ({ navigateTo }) => {
                   {team.desc}
                 </p>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <AnimatePresence mode="popLayout">
                   {members.map(renderMemberCard)}
                 </AnimatePresence>
