@@ -4,7 +4,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { api, photoUrl } from '../lib/api';
 
-// Local team member photo imports from frontend/src/images/team/
+// Local team member photo imports from frontend/src/images/team/ directory. These are used as a fallback when the member's photoUrl is not available from the API.
 import rishiImg from '../images/team/RISHI KUMAR MISHRA.jpg';
 import atulImg from '../images/team/Atul Sahane.jpg';
 import sauravImg from '../images/team/Saurav jha.jpg';
