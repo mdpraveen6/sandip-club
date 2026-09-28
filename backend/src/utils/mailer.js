@@ -1,7 +1,12 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns').promises;
+const net = require('net');
 
 let transporter = null;
 let cachedKey = null;
+let cachedIp = null;
+let cachedIpExpires = 0;
+const IP_TTL_MS = 5 * 60 * 1000; // re-resolve Gmail's A records every 5 min
 
 // Project convention is SMTP_USER / SMTP_PASS (see backend/.env.example).
 // Accept SMTP_APP_PASSWORD as an alias for the password so Gmail App
@@ -14,22 +19,41 @@ function isConfigured() {
   return !!(process.env.SMTP_USER && getSmtpPassword());
 }
 
-function getTransport() {
+// NOTE: nodemailer v10 ignores a `family` transport option — its internal
+// resolver always merges IPv4+IPv6 and picks randomly, which is exactly what
+// produced `ENETUNREACH 2607:f8b0:...:587`. So we resolve the SMTP hostname
+// to IPv4 OURSELVES and hand nodemailer a literal IPv4 address (its resolver
+// short-circuits for IPs). `tls.servername` keeps SNI/cert verification
+// pinned to the real hostname.
+async function resolveSmtpIPv4(host) {
+  const now = Date.now();
+  if (cachedIp && cachedIpExpires > now) return cachedIp;
+  const found = await dns.lookup(host, { family: 4, all: true });
+  if (!found || !found.length) throw new Error(`No IPv4 address found for ${host}`);
+  cachedIp = found[Math.floor(Math.random() * found.length)].address;
+  cachedIpExpires = now + IP_TTL_MS;
+  return cachedIp;
+}
+
+async function getTransport() {
   if (!isConfigured()) return null;
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT, 10) || 587;
   const user = process.env.SMTP_USER;
   const pass = getSmtpPassword();
-  // Recreate if credentials/host/port changed (e.g. env updated, tests).
-  const key = `${host}:${port}:${user}:${pass.length}`;
+  // Literal IPv4 — IPv6 is never attempted, so ENETUNREACH on 2607:f8b0::/32
+  // cannot happen regardless of nodemailer's internal resolver behaviour.
+  const ipv4 = await resolveSmtpIPv4(host);
+  if (!net.isIPv4(ipv4)) throw new Error(`Resolved SMTP address is not IPv4: ${ipv4}`);
+  // Recreate if endpoint/credentials changed (env update, DNS rotation, tests).
+  const key = `${ipv4}:${port}:${user}:${pass.length}`;
   if (!transporter || cachedKey !== key) {
     transporter = nodemailer.createTransport({
-      host,
+      host: ipv4,
       port,
       secure: port === 465,
-      // Force IPv4: deployment envs (Vercel/Render) often cannot reach
-      // Gmail's IPv6 address (ENETUNREACH 2607:f8b0:...:587).
       family: 4,
+      tls: { servername: host },
       auth: { user, pass },
     });
     cachedKey = key;
@@ -37,16 +61,18 @@ function getTransport() {
   return transporter;
 }
 
-// For tests/diagnostics only — drops the cached transporter.
+// For tests/diagnostics only — drops the cached transporter + DNS entry.
 function _resetTransport() {
   transporter = null;
   cachedKey = null;
+  cachedIp = null;
+  cachedIpExpires = 0;
 }
 
 // Verifies the SMTP connection without exposing credentials.
 // Throws on failure so callers can surface err.message as emailError.
 async function verifyTransport() {
-  const t = getTransport();
+  const t = await getTransport();
   if (!t) throw new Error('Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)');
   await t.verify();
   return true;
@@ -114,7 +140,7 @@ function passHtml(reg) {
 // always works even before SMTP is set up.
 // `sent` is only true when the SMTP server accepted the message.
 async function sendApprovalEmail(reg) {
-  const t = getTransport();
+  const t = await getTransport();
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
@@ -147,7 +173,7 @@ const btnRow = (code) => `
 
 // Invite email: sub-admin sets their OWN password via code (super never handles passwords).
 async function sendAccessInviteEmail(email, code) {
-  const t = getTransport();
+  const t = await getTransport();
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
@@ -180,7 +206,7 @@ async function sendAccessInviteEmail(email, code) {
 
 // Forgot-password verification code (15 min, single use).
 async function sendResetCodeEmail(email, code) {
-  const t = getTransport();
+  const t = await getTransport();
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
@@ -211,7 +237,7 @@ async function sendResetCodeEmail(email, code) {
 
 // Pings the super admin (and permitted sub-admins) the moment an application lands.
 async function sendNewRegistrationAlert(reg, extraRecipients = []) {
-  const t = getTransport();
+  const t = await getTransport();
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const to = [String(process.env.SUPER_ADMIN_EMAIL || '').trim(), ...extraRecipients].filter(Boolean);
   if (!to.length) return { sent: false, error: 'No admin recipients configured' };
