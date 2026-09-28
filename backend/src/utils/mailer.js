@@ -1,22 +1,69 @@
 const nodemailer = require('nodemailer');
 
 let transporter = null;
+let cachedKey = null;
+
+// Project convention is SMTP_USER / SMTP_PASS (see backend/.env.example).
+// Accept SMTP_APP_PASSWORD as an alias for the password so Gmail App
+// Passwords work under either name. Never hardcode secrets here.
+function getSmtpPassword() {
+  return process.env.SMTP_PASS || process.env.SMTP_APP_PASSWORD || '';
+}
 
 function isConfigured() {
-  return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+  return !!(process.env.SMTP_USER && getSmtpPassword());
 }
 
 function getTransport() {
   if (!isConfigured()) return null;
-  if (!transporter) {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT, 10) || 587;
+  const user = process.env.SMTP_USER;
+  const pass = getSmtpPassword();
+  // Recreate if credentials/host/port changed (e.g. env updated, tests).
+  const key = `${host}:${port}:${user}:${pass.length}`;
+  if (!transporter || cachedKey !== key) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT, 10) || 587,
-      secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      host,
+      port,
+      secure: port === 465,
+      // Force IPv4: deployment envs (Vercel/Render) often cannot reach
+      // Gmail's IPv6 address (ENETUNREACH 2607:f8b0:...:587).
+      family: 4,
+      auth: { user, pass },
     });
+    cachedKey = key;
   }
   return transporter;
+}
+
+// For tests/diagnostics only — drops the cached transporter.
+function _resetTransport() {
+  transporter = null;
+  cachedKey = null;
+}
+
+// Verifies the SMTP connection without exposing credentials.
+// Throws on failure so callers can surface err.message as emailError.
+async function verifyTransport() {
+  const t = getTransport();
+  if (!t) throw new Error('Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)');
+  await t.verify();
+  return true;
+}
+
+// Log useful network/SMTP diagnostics. Never log user/pass.
+function logSmtpError(tag, err) {
+  if (!err) return;
+  console.error(`[${tag}]`, {
+    message: err.message,
+    code: err.code,
+    command: err.command,
+    responseCode: err.responseCode,
+    syscall: err.syscall,
+    address: err.address,
+    port: err.port,
+  });
 }
 
 const esc = (v) =>
@@ -65,25 +112,30 @@ function passHtml(reg) {
 // Sends the approval email with the Founder Pass.
 // Never throws for missing config — returns { sent, error? } so accepting
 // always works even before SMTP is set up.
+// `sent` is only true when the SMTP server accepted the message.
 async function sendApprovalEmail(reg) {
   const t = getTransport();
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
-    await t.sendMail({
+    await t.verify();
+    const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
       to: reg.email,
       subject: `Approved — your SUN Launchpad Founder Pass (${reg.passRef})`,
       html: passHtml(reg),
     });
+    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
+      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
+    }
     return { sent: true };
   } catch (err) {
-    console.error('[mailer]', err.message);
+    logSmtpError('mailer', err);
     return { sent: false, error: err.message };
   }
 }
 
-module.exports = { isConfigured, sendApprovalEmail, sendAccessInviteEmail, sendResetCodeEmail, sendNewRegistrationAlert };
+module.exports = { isConfigured, getTransport, verifyTransport, _resetTransport, sendApprovalEmail, sendAccessInviteEmail, sendResetCodeEmail, sendNewRegistrationAlert };
 
 function appLink(path) {
   const base = String(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
@@ -99,7 +151,8 @@ async function sendAccessInviteEmail(email, code) {
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
-    await t.sendMail({
+    await t.verify();
+    const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
       to: email,
       subject: 'You have SEBC admin access — set your password',
@@ -115,9 +168,12 @@ async function sendAccessInviteEmail(email, code) {
         </div>
       </div>`,
     });
+    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
+      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
+    }
     return { sent: true };
   } catch (err) {
-    console.error('[mailer:invite]', err.message);
+    logSmtpError('mailer:invite', err);
     return { sent: false, error: err.message };
   }
 }
@@ -128,7 +184,8 @@ async function sendResetCodeEmail(email, code) {
   if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
-    await t.sendMail({
+    await t.verify();
+    const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
       to: email,
       subject: 'Your SEBC verification code',
@@ -142,9 +199,12 @@ async function sendResetCodeEmail(email, code) {
         </div>
       </div>`,
     });
+    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
+      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
+    }
     return { sent: true };
   } catch (err) {
-    console.error('[mailer:reset]', err.message);
+    logSmtpError('mailer:reset', err);
     return { sent: false, error: err.message };
   }
 }
@@ -157,7 +217,8 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
   if (!to.length) return { sent: false, error: 'No admin recipients configured' };
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
-    await t.sendMail({
+    await t.verify();
+    const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
       to: to.join(', '),
       subject: `New application: ${reg.ideaTitle} — ${reg.fullName}`,
@@ -177,9 +238,12 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
         </div>
       </div>`,
     });
+    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
+      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
+    }
     return { sent: true };
   } catch (err) {
-    console.error('[mailer:alert]', err.message);
+    logSmtpError('mailer:alert', err);
     return { sent: false, error: err.message };
   }
 }
