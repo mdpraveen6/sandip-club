@@ -10,6 +10,8 @@ const IP_TTL_MS = 5 * 60 * 1000; // re-resolve Gmail's A records every 5 min
 // Last SMTP target attempted (literal IP + port + hostname). Surfaced in
 // errors/logs for diagnosis — Gmail IPs are public, never credentials.
 let lastTarget = null;
+// Which channel the last attempt used ('smtp' | 'resend' | null).
+let lastChannel = null;
 
 // Project convention is SMTP_USER / SMTP_PASS (see backend/.env.example).
 // Accept SMTP_APP_PASSWORD as an alias for the password so Gmail App
@@ -19,7 +21,66 @@ function getSmtpPassword() {
 }
 
 function isConfigured() {
-  return !!(process.env.SMTP_USER && getSmtpPassword());
+  return !!((process.env.RESEND_API_KEY || '') || (process.env.SMTP_USER && getSmtpPassword()));
+}
+
+// HTTPS email API (Resend) — preferred when configured, because it works
+// over port 443 even on hosts whose firewall drops outbound SMTP ( Render
+// free hosts time out on smtp.gmail.com:587 ). SMTP/IPv4 below is the
+// fallback for environments where direct SMTP egress works.
+function useResend() {
+  return !!(process.env.RESEND_API_KEY || '').trim();
+}
+
+function resendFrom() {
+  const base = process.env.MAIL_FROM || process.env.SMTP_USER || 'onboarding@resend.dev';
+  // Resend validates the addr-spec; keep an ASCII display name.
+  const m = String(base).match(/<([^<>]+)>\s*$/);
+  const addr = (m ? m[1] : String(base)).trim();
+  return `SEBC Sandip E-Club <${addr}>`;
+}
+
+function normalizeTo(to) {
+  const list = (Array.isArray(to) ? to : String(to || '').split(','))
+    .map((s) => String(s).trim())
+    .filter(Boolean);
+  return list;
+}
+
+function resendTimeoutSignal(ms) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  return undefined;
+}
+
+// Sends one email via Resend HTTPS API. Resolves only on HTTP 2xx (+ id).
+// Throws otherwise so callers surface the message as emailError. Never logs
+// the API key.
+async function sendViaResend({ to, subject, html }) {
+  const key = (process.env.RESEND_API_KEY || '').trim();
+  if (!key) throw new Error('Email not configured (set RESEND_API_KEY in backend/.env)');
+  const recipients = normalizeTo(to);
+  if (!recipients.length) throw new Error('No email recipients');
+  lastChannel = 'resend';
+  let res;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: resendFrom(), to: recipients, subject, html }),
+      signal: resendTimeoutSignal(30000),
+    });
+  } catch (err) {
+    throw new Error(`Resend request failed: ${err.message}`);
+  }
+  let data = {};
+  try { data = await res.json(); } catch { /* non-JSON body */ }
+  if (!res.ok) {
+    const detail = (data && (data.message || data.error)) || `Resend error (${res.status})`;
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+  }
+  return data;
 }
 
 // NOTE: nodemailer v10 ignores a `family` transport option — its internal
@@ -49,6 +110,7 @@ async function getTransport() {
   const ipv4 = await resolveSmtpIPv4(host);
   if (!net.isIPv4(ipv4)) throw new Error(`Resolved SMTP address is not IPv4: ${ipv4}`);
   lastTarget = { ip: ipv4, port, hostname: host };
+  lastChannel = 'smtp';
   // Recreate if endpoint/credentials changed (env update, DNS rotation, tests).
   const key = `${ipv4}:${port}:${user}:${pass.length}`;
   if (!transporter || cachedKey !== key) {
@@ -72,13 +134,30 @@ function _resetTransport() {
   cachedIp = null;
   cachedIpExpires = 0;
   lastTarget = null;
+  lastChannel = null;
 }
 
-// Verifies the SMTP connection without exposing credentials.
+// Verifies the email channel without exposing credentials.
+// Resend mode: validates the API key via GET /domains (no email sent).
+// SMTP mode: verifies the SMTP connection.
 // Throws on failure so callers can surface err.message as emailError.
 async function verifyTransport() {
+  if (useResend()) {
+    const key = (process.env.RESEND_API_KEY || '').trim();
+    let res;
+    try {
+      res = await fetch('https://api.resend.com/domains', {
+        headers: { Authorization: `Bearer ${key}` },
+        signal: resendTimeoutSignal(30000),
+      });
+    } catch (err) {
+      throw new Error(`Resend request failed: ${err.message}`);
+    }
+    if (!res.ok) throw new Error(`Resend key check failed (${res.status})`);
+    return true;
+  }
   const t = await getTransport();
-  if (!t) throw new Error('Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)');
+  if (!t) throw new Error('Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)');
   await t.verify();
   return true;
 }
@@ -103,7 +182,7 @@ function logSmtpError(tag, err) {
 // transport was actually built (lastTarget set); never includes credentials.
 function withTarget(err) {
   const msg = err && err.message ? err.message : String(err);
-  if (lastTarget && !/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|2607:|::/.test(msg)) {
+  if (lastChannel === 'smtp' && lastTarget && !/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|2607:|::/.test(msg)) {
     return `${msg} [smtp ${lastTarget.ip}:${lastTarget.port}]`;
   }
   return msg;
@@ -154,13 +233,21 @@ function passHtml(reg) {
 
 // Sends the approval email with the Founder Pass.
 // Never throws for missing config — returns { sent, error? } so accepting
-// always works even before SMTP is set up.
-// `sent` is only true when the SMTP server accepted the message.
+// always works even before email is set up.
+// `sent` is only true when the provider accepted the message.
 async function sendApprovalEmail(reg) {
-  const t = await getTransport();
-  if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
   try {
+    if (useResend()) {
+      await sendViaResend({
+        to: reg.email,
+        subject: `Approved — your SUN Launchpad Founder Pass (${reg.passRef})`,
+        html: passHtml(reg),
+      });
+      return { sent: true };
+    }
+    const t = await getTransport();
+    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     await t.verify();
     const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
@@ -190,16 +277,7 @@ const btnRow = (code) => `
 
 // Invite email: sub-admin sets their OWN password via code (super never handles passwords).
 async function sendAccessInviteEmail(email, code) {
-  const t = await getTransport();
-  if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
-  try {
-    await t.verify();
-    const info = await t.sendMail({
-      from: `"SEBC • Sandip E-Club" <${from}>`,
-      to: email,
-      subject: 'You have SEBC admin access — set your password',
-      html: `
+  const inviteHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;background:#060B09;padding:32px 16px;color:#F4F1E6">
         <div style="max-width:560px;margin:0 auto">
           <p style="font-size:12px;letter-spacing:2px;color:#DDB84E;font-weight:bold;margin:0">SEBC × SUN LAUNCHPAD 2026</p>
@@ -209,7 +287,25 @@ async function sendAccessInviteEmail(email, code) {
           <p style="text-align:center"><a href="${appLink('/#/admin?setup=1')}" style="display:inline-block;background:#DDB84E;color:#1A1405;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:999px;text-decoration:none">Open admin panel</a></p>
           <p style="font-size:12px;color:#8FA098">Your access may be limited to a time window chosen by the super admin — the panel shows it after login.</p>
         </div>
-      </div>`,
+      </div>`;
+  try {
+    if (useResend()) {
+      await sendViaResend({
+        to: email,
+        subject: 'You have SEBC admin access — set your password',
+        html: inviteHtml,
+      });
+      return { sent: true };
+    }
+    const t = await getTransport();
+    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+    await t.verify();
+    const info = await t.sendMail({
+      from: `"SEBC • Sandip E-Club" <${from}>`,
+      to: email,
+      subject: 'You have SEBC admin access — set your password',
+      html: inviteHtml,
     });
     if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
       return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
@@ -223,16 +319,7 @@ async function sendAccessInviteEmail(email, code) {
 
 // Forgot-password verification code (15 min, single use).
 async function sendResetCodeEmail(email, code) {
-  const t = await getTransport();
-  if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
-  try {
-    await t.verify();
-    const info = await t.sendMail({
-      from: `"SEBC • Sandip E-Club" <${from}>`,
-      to: email,
-      subject: 'Your SEBC verification code',
-      html: `
+  const resetHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;background:#060B09;padding:32px 16px;color:#F4F1E6">
         <div style="max-width:560px;margin:0 auto">
           <p style="font-size:12px;letter-spacing:2px;color:#DDB84E;font-weight:bold;margin:0">SEBC ADMIN ACCESS</p>
@@ -240,7 +327,25 @@ async function sendResetCodeEmail(email, code) {
           <p style="color:#B9C4BC;line-height:1.65;font-size:14px">Enter this code with a new password on the admin login screen. Valid 15 minutes, single use. If you didn't ask, ignore this email.</p>
           ${btnRow(code)}
         </div>
-      </div>`,
+      </div>`;
+  try {
+    if (useResend()) {
+      await sendViaResend({
+        to: email,
+        subject: 'Your SEBC verification code',
+        html: resetHtml,
+      });
+      return { sent: true };
+    }
+    const t = await getTransport();
+    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+    await t.verify();
+    const info = await t.sendMail({
+      from: `"SEBC • Sandip E-Club" <${from}>`,
+      to: email,
+      subject: 'Your SEBC verification code',
+      html: resetHtml,
     });
     if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
       return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
@@ -254,18 +359,9 @@ async function sendResetCodeEmail(email, code) {
 
 // Pings the super admin (and permitted sub-admins) the moment an application lands.
 async function sendNewRegistrationAlert(reg, extraRecipients = []) {
-  const t = await getTransport();
-  if (!t) return { sent: false, error: 'Email not configured (set SMTP_USER / SMTP_PASS in backend/.env)' };
   const to = [String(process.env.SUPER_ADMIN_EMAIL || '').trim(), ...extraRecipients].filter(Boolean);
   if (!to.length) return { sent: false, error: 'No admin recipients configured' };
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER;
-  try {
-    await t.verify();
-    const info = await t.sendMail({
-      from: `"SEBC • Sandip E-Club" <${from}>`,
-      to: to.join(', '),
-      subject: `New application: ${reg.ideaTitle} — ${reg.fullName}`,
-      html: `
+  const alertHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;background:#060B09;padding:32px 16px;color:#F4F1E6">
         <div style="max-width:560px;margin:0 auto">
           <p style="font-size:12px;letter-spacing:2px;color:#DDB84E;font-weight:bold;margin:0">NEW REGISTRATION</p>
@@ -279,7 +375,25 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
           <p style="color:#B9C4BC;font-size:14px"><b style="color:#F4F1E6">Problem:</b> ${esc((reg.problemStatement || '').slice(0, 300))}</p>
           <p style="text-align:center;margin-top:20px"><a href="${appLink('/#/admin')}" style="display:inline-block;background:#DDB84E;color:#1A1405;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:999px;text-decoration:none">Review in admin panel</a></p>
         </div>
-      </div>`,
+      </div>`;
+  try {
+    if (useResend()) {
+      await sendViaResend({
+        to,
+        subject: `New application: ${reg.ideaTitle} — ${reg.fullName}`,
+        html: alertHtml,
+      });
+      return { sent: true };
+    }
+    const t = await getTransport();
+    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+    await t.verify();
+    const info = await t.sendMail({
+      from: `"SEBC • Sandip E-Club" <${from}>`,
+      to: to.join(', '),
+      subject: `New application: ${reg.ideaTitle} — ${reg.fullName}`,
+      html: alertHtml,
     });
     if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
       return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
