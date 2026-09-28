@@ -7,6 +7,9 @@ let cachedKey = null;
 let cachedIp = null;
 let cachedIpExpires = 0;
 const IP_TTL_MS = 5 * 60 * 1000; // re-resolve Gmail's A records every 5 min
+// Last SMTP target attempted (literal IP + port + hostname). Surfaced in
+// errors/logs for diagnosis — Gmail IPs are public, never credentials.
+let lastTarget = null;
 
 // Project convention is SMTP_USER / SMTP_PASS (see backend/.env.example).
 // Accept SMTP_APP_PASSWORD as an alias for the password so Gmail App
@@ -45,6 +48,7 @@ async function getTransport() {
   // cannot happen regardless of nodemailer's internal resolver behaviour.
   const ipv4 = await resolveSmtpIPv4(host);
   if (!net.isIPv4(ipv4)) throw new Error(`Resolved SMTP address is not IPv4: ${ipv4}`);
+  lastTarget = { ip: ipv4, port, hostname: host };
   // Recreate if endpoint/credentials changed (env update, DNS rotation, tests).
   const key = `${ipv4}:${port}:${user}:${pass.length}`;
   if (!transporter || cachedKey !== key) {
@@ -67,6 +71,7 @@ function _resetTransport() {
   cachedKey = null;
   cachedIp = null;
   cachedIpExpires = 0;
+  lastTarget = null;
 }
 
 // Verifies the SMTP connection without exposing credentials.
@@ -89,7 +94,19 @@ function logSmtpError(tag, err) {
     syscall: err.syscall,
     address: err.address,
     port: err.port,
+    target: lastTarget,
   });
+}
+
+// Appends the attempted SMTP target to an error message so the API response
+// shows WHICH address failed (e.g. IPv4 literal vs IPv6). Only call when a
+// transport was actually built (lastTarget set); never includes credentials.
+function withTarget(err) {
+  const msg = err && err.message ? err.message : String(err);
+  if (lastTarget && !/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|2607:|::/.test(msg)) {
+    return `${msg} [smtp ${lastTarget.ip}:${lastTarget.port}]`;
+  }
+  return msg;
 }
 
 const esc = (v) =>
@@ -157,7 +174,7 @@ async function sendApprovalEmail(reg) {
     return { sent: true };
   } catch (err) {
     logSmtpError('mailer', err);
-    return { sent: false, error: err.message };
+    return { sent: false, error: withTarget(err) };
   }
 }
 
@@ -200,7 +217,7 @@ async function sendAccessInviteEmail(email, code) {
     return { sent: true };
   } catch (err) {
     logSmtpError('mailer:invite', err);
-    return { sent: false, error: err.message };
+    return { sent: false, error: withTarget(err) };
   }
 }
 
@@ -231,7 +248,7 @@ async function sendResetCodeEmail(email, code) {
     return { sent: true };
   } catch (err) {
     logSmtpError('mailer:reset', err);
-    return { sent: false, error: err.message };
+    return { sent: false, error: withTarget(err) };
   }
 }
 
@@ -270,6 +287,6 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
     return { sent: true };
   } catch (err) {
     logSmtpError('mailer:alert', err);
-    return { sent: false, error: err.message };
+    return { sent: false, error: withTarget(err) };
   }
 }
