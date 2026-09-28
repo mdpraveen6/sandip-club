@@ -21,13 +21,67 @@ function getSmtpPassword() {
 }
 
 function isConfigured() {
-  return !!((process.env.RESEND_API_KEY || '') || (process.env.SMTP_USER && getSmtpPassword()));
+  return !!((process.env.BREVO_API_KEY || '').trim()
+    || (process.env.RESEND_API_KEY || '').trim()
+    || (process.env.SMTP_USER && getSmtpPassword()));
 }
 
-// HTTPS email API (Resend) — preferred when configured, because it works
-// over port 443 even on hosts whose firewall drops outbound SMTP ( Render
-// free hosts time out on smtp.gmail.com:587 ). SMTP/IPv4 below is the
-// fallback for environments where direct SMTP egress works.
+// Parse MAIL_FROM ("Name <addr>" or bare addr) into { name, email }.
+// Brevo requires a verified sender/domain; free @gmail-type addresses get
+// replaced/flagged by Brevo, so prefer a verified domain address.
+function parseSender(fallbackName) {
+  const raw = String(process.env.MAIL_FROM || process.env.SMTP_USER || '').trim();
+  const m = raw.match(/^(?:"?([^"<]+)"?\s*)?<([^<>]+)>\s*$/);
+  if (m) return { name: (m[1] || fallbackName).trim(), email: m[2].trim() };
+  if (raw) return { name: fallbackName, email: raw };
+  return { name: fallbackName, email: '' };
+}
+
+// HTTPS email API (Brevo) — first choice when configured: 300 free emails/day
+// over port 443, works where outbound SMTP is firewalled. Needs a verified
+// sender/domain in the Brevo dashboard.
+function useBrevo() {
+  return !!(process.env.BREVO_API_KEY || '').trim();
+}
+
+// Sends one email via Brevo HTTPS API. Resolves only on HTTP 2xx (+ messageId).
+// Throws otherwise so callers surface the message as emailError. Never logs
+// the API key.
+async function sendViaBrevo({ to, subject, html }) {
+  const key = (process.env.BREVO_API_KEY || '').trim();
+  if (!key) throw new Error('Email not configured (set BREVO_API_KEY in backend/.env)');
+  const recipients = normalizeTo(to);
+  if (!recipients.length) throw new Error('No email recipients');
+  const sender = parseSender('SEBC Sandip E-Club');
+  if (!sender.email) throw new Error('Set MAIL_FROM to a Brevo-verified sender address');
+  lastChannel = 'brevo';
+  let res;
+  try {
+    res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': key, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        sender,
+        to: recipients.map((email) => ({ email })),
+        subject,
+        htmlContent: html,
+      }),
+      signal: resendTimeoutSignal(30000),
+    });
+  } catch (err) {
+    throw new Error(`Brevo request failed: ${err.message}`);
+  }
+  let data = {};
+  try { data = await res.json(); } catch { /* non-JSON body */ }
+  if (!res.ok) {
+    const detail = (data && (data.message || data.error)) || `Brevo error (${res.status})`;
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+// HTTPS email API (Resend) — used when BREVO_API_KEY is absent but
+// RESEND_API_KEY is set. SMTP/IPv4 below is the final fallback.
 function useResend() {
   return !!(process.env.RESEND_API_KEY || '').trim();
 }
@@ -138,10 +192,25 @@ function _resetTransport() {
 }
 
 // Verifies the email channel without exposing credentials.
+// Brevo mode: validates the API key via GET /v3/account (no email sent).
 // Resend mode: validates the API key via GET /domains (no email sent).
 // SMTP mode: verifies the SMTP connection.
 // Throws on failure so callers can surface err.message as emailError.
 async function verifyTransport() {
+  if (useBrevo()) {
+    const key = (process.env.BREVO_API_KEY || '').trim();
+    let res;
+    try {
+      res = await fetch('https://api.brevo.com/v3/account', {
+        headers: { 'api-key': key, Accept: 'application/json' },
+        signal: resendTimeoutSignal(30000),
+      });
+    } catch (err) {
+      throw new Error(`Brevo request failed: ${err.message}`);
+    }
+    if (!res.ok) throw new Error(`Brevo key check failed (${res.status})`);
+    return true;
+  }
   if (useResend()) {
     const key = (process.env.RESEND_API_KEY || '').trim();
     let res;
@@ -157,7 +226,7 @@ async function verifyTransport() {
     return true;
   }
   const t = await getTransport();
-  if (!t) throw new Error('Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)');
+  if (!t) throw new Error('Email not configured (set BREVO_API_KEY, RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)');
   await t.verify();
   return true;
 }
@@ -237,6 +306,14 @@ function passHtml(reg) {
 // `sent` is only true when the provider accepted the message.
 async function sendApprovalEmail(reg) {
   try {
+    if (useBrevo()) {
+      await sendViaBrevo({
+        to: reg.email,
+        subject: `Approved — your SUN Launchpad Founder Pass (${reg.passRef})`,
+        html: passHtml(reg),
+      });
+      return { sent: true };
+    }
     if (useResend()) {
       await sendViaResend({
         to: reg.email,
@@ -246,7 +323,7 @@ async function sendApprovalEmail(reg) {
       return { sent: true };
     }
     const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    if (!t) return { sent: false, error: 'Email not configured (set BREVO_API_KEY, RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     await t.verify();
     const info = await t.sendMail({
@@ -289,6 +366,14 @@ async function sendAccessInviteEmail(email, code) {
         </div>
       </div>`;
   try {
+    if (useBrevo()) {
+      await sendViaBrevo({
+        to: email,
+        subject: 'You have SEBC admin access — set your password',
+        html: inviteHtml,
+      });
+      return { sent: true };
+    }
     if (useResend()) {
       await sendViaResend({
         to: email,
@@ -298,7 +383,7 @@ async function sendAccessInviteEmail(email, code) {
       return { sent: true };
     }
     const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    if (!t) return { sent: false, error: 'Email not configured (set BREVO_API_KEY, RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     await t.verify();
     const info = await t.sendMail({
@@ -329,6 +414,14 @@ async function sendResetCodeEmail(email, code) {
         </div>
       </div>`;
   try {
+    if (useBrevo()) {
+      await sendViaBrevo({
+        to: email,
+        subject: 'Your SEBC verification code',
+        html: resetHtml,
+      });
+      return { sent: true };
+    }
     if (useResend()) {
       await sendViaResend({
         to: email,
@@ -338,7 +431,7 @@ async function sendResetCodeEmail(email, code) {
       return { sent: true };
     }
     const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    if (!t) return { sent: false, error: 'Email not configured (set BREVO_API_KEY, RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     await t.verify();
     const info = await t.sendMail({
@@ -377,6 +470,14 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
         </div>
       </div>`;
   try {
+    if (useBrevo()) {
+      await sendViaBrevo({
+        to,
+        subject: `New application: ${reg.ideaTitle} — ${reg.fullName}`,
+        html: alertHtml,
+      });
+      return { sent: true };
+    }
     if (useResend()) {
       await sendViaResend({
         to,
@@ -386,7 +487,7 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
       return { sent: true };
     }
     const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+    if (!t) return { sent: false, error: 'Email not configured (set BREVO_API_KEY, RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
     await t.verify();
     const info = await t.sendMail({
