@@ -5,11 +5,9 @@ import { Button } from '../components/Button';
 import { api, photoUrl } from '../lib/api';
 
 // Local team member photo imports from frontend/src/images/team/ directory.
-// The photo file 'Saurav jha.jpg' corresponds to Rishi Kumar Mishra (President),
-// and 'RISHI KUMAR MISHRA.jpg' corresponds to Saurav Jha (Secretary).
-import rishiImg from '../images/team/Saurav jha.jpg';
+import rishiImg from '../images/team/RISHI KUMAR MISHRA.jpg';
 import atulImg from '../images/team/Atul Sahane.jpg';
-import sauravImg from '../images/team/RISHI KUMAR MISHRA.jpg';
+import sauravImg from '../images/team/Saurav jha.jpg';
 import maksudImg from '../images/team/Shaik Maksud Ahmad.jpg';
 import jahanImg from '../images/team/Jahan Ara khan.jpg';
 import praveenImg from '../images/team/M.D Praveen.jpg';
