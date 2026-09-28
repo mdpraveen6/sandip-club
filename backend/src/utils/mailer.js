@@ -235,8 +235,54 @@ function passHtml(reg) {
 // Never throws for missing config — returns { sent, error? } so accepting
 // always works even before email is set up.
 // `sent` is only true when the provider accepted the message.
+// Sends the approval email with the Founder Pass.
+// Never throws for missing config — returns { sent, error? } so accepting
+// always works even before email is set up.
+// `sent` is only true when the provider accepted the message.
 async function sendApprovalEmail(reg) {
   try {
+
+    // AgentMail — use HTTPS API when AGENTMAIL_API_KEY is configured.
+    if (process.env.AGENTMAIL_API_KEY) {
+      const inboxId = 'sandipentrepreneurship@agentmail.to';
+
+      const response = await fetch(
+        `https://api.agentmail.to/v0/inboxes/${encodeURIComponent(inboxId)}/messages/send`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.AGENTMAIL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: [reg.email],
+            subject: `Approved — your SUN Launchpad Founder Pass (${reg.passRef})`,
+            text: `Congratulations ${reg.fullName}! Your registration has been approved. Your Founder Pass reference is ${reg.passRef}.`,
+            html: passHtml(reg),
+          }),
+        }
+      );
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        // Non-JSON response
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+          data?.error ||
+          `AgentMail error (${response.status})`
+        );
+      }
+
+      console.log('[mailer] AgentMail sent');
+
+      return { sent: true };
+    }
+
     if (useResend()) {
       await sendViaResend({
         to: reg.email,
@@ -245,74 +291,43 @@ async function sendApprovalEmail(reg) {
       });
       return { sent: true };
     }
+
     const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
+
+    if (!t) {
+      return {
+        sent: false,
+        error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)'
+      };
+    }
+
     const from = process.env.MAIL_FROM || process.env.SMTP_USER;
+
     await t.verify();
+
     const info = await t.sendMail({
       from: `"SEBC • Sandip E-Club" <${from}>`,
       to: reg.email,
       subject: `Approved — your SUN Launchpad Founder Pass (${reg.passRef})`,
       html: passHtml(reg),
     });
-    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
-      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
+
+    if (
+      info &&
+      Array.isArray(info.rejected) &&
+      info.rejected.length > 0 &&
+      (!info.accepted || info.accepted.length === 0)
+    ) {
+      return {
+        sent: false,
+        error: `SMTP rejected recipient: ${info.rejected.join(', ')}`
+      };
     }
+
     return { sent: true };
+
   } catch (err) {
     logSmtpError('mailer', err);
-    return { sent: false, error: withTarget(err) };
-  }
-}
-
-module.exports = { isConfigured, getTransport, verifyTransport, _resetTransport, sendApprovalEmail, sendAccessInviteEmail, sendResetCodeEmail, sendNewRegistrationAlert };
-
-function appLink(path) {
-  const base = String(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-  return `${base}${path}`;
-}
-
-const btnRow = (code) => `
-  <div style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#1A1405;background:linear-gradient(135deg,#F3E2A9,#DDB84E);border-radius:12px;padding:14px 10px;text-align:center;margin:16px 0">${code}</div>`;
-
-// Invite email: sub-admin sets their OWN password via code (super never handles passwords).
-async function sendAccessInviteEmail(email, code) {
-  const inviteHtml = `
-      <div style="font-family:Arial,Helvetica,sans-serif;background:#060B09;padding:32px 16px;color:#F4F1E6">
-        <div style="max-width:560px;margin:0 auto">
-          <p style="font-size:12px;letter-spacing:2px;color:#DDB84E;font-weight:bold;margin:0">SEBC × SUN LAUNCHPAD 2026</p>
-          <h1 style="font-size:24px;margin:10px 0">You've been given admin access 🔑</h1>
-          <p style="color:#B9C4BC;line-height:1.65;font-size:14px">Open the admin panel link below, choose <b style="color:#F4F1E6">Set / reset password</b>, and enter this one-time code with the email <b style="color:#F4F1E6">${esc(email)}</b>. The code works for 48 hours and only once.</p>
-          ${btnRow(code)}
-          <p style="text-align:center"><a href="${appLink('/#/admin?setup=1')}" style="display:inline-block;background:#DDB84E;color:#1A1405;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:999px;text-decoration:none">Open admin panel</a></p>
-          <p style="font-size:12px;color:#8FA098">Your access may be limited to a time window chosen by the super admin — the panel shows it after login.</p>
-        </div>
-      </div>`;
-  try {
-    if (useResend()) {
-      await sendViaResend({
-        to: email,
-        subject: 'You have SEBC admin access — set your password',
-        html: inviteHtml,
-      });
-      return { sent: true };
-    }
-    const t = await getTransport();
-    if (!t) return { sent: false, error: 'Email not configured (set RESEND_API_KEY or SMTP_USER / SMTP_PASS in backend/.env)' };
-    const from = process.env.MAIL_FROM || process.env.SMTP_USER;
-    await t.verify();
-    const info = await t.sendMail({
-      from: `"SEBC • Sandip E-Club" <${from}>`,
-      to: email,
-      subject: 'You have SEBC admin access — set your password',
-      html: inviteHtml,
-    });
-    if (info && Array.isArray(info.rejected) && info.rejected.length > 0 && (!info.accepted || info.accepted.length === 0)) {
-      return { sent: false, error: `SMTP rejected recipient: ${info.rejected.join(', ')}` };
-    }
-    return { sent: true };
-  } catch (err) {
-    logSmtpError('mailer:invite', err);
     return { sent: false, error: withTarget(err) };
   }
 }
