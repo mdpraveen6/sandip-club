@@ -8,6 +8,7 @@ import { Register } from './pages/Register';
 import { Team } from './pages/Team';
 import { Admin } from './pages/Admin';
 import { api, getToken, clearToken } from './lib/api';
+import { SunLaunchpadLoader } from './components/SunLaunchpadLoader';
 
 import logoImg from './images/sandip-university-logo.jpg';
 
@@ -170,6 +171,7 @@ export default function App() {
   if (activePage === 'admin') {
     return (
       <div className="bg-cream-50 dark:bg-ink-950 aurora-bg text-emerald-950 dark:text-white min-h-screen font-sans transition-colors duration-300">
+        <SunLaunchpadLoader />
         <main className="pt-4 sm:pt-6 pb-8 px-4 sm:px-8 max-w-7xl mx-auto w-full overflow-x-clip">
           <Admin navigateTo={handlePageChange} />
         </main>
@@ -179,19 +181,20 @@ export default function App() {
 
   return (
     <div className="bg-cream-50 dark:bg-ink-950 aurora-bg text-emerald-950 dark:text-white min-h-screen flex flex-col font-sans transition-colors duration-300">
+      <SunLaunchpadLoader />
       {/* ================= HEADER ================= */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-nav">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
-          <button onClick={() => handlePageChange('home')} className="flex items-center gap-3 group">
-            <span className="relative">
-              <img src={logoImg} alt="Sun Entrepreneurship Club logo" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover ring-1 ring-gold-500/40 shadow-sm transition-transform duration-300 group-hover:scale-105" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-cream-50 dark:border-ink-950" />
+          <button onClick={() => handlePageChange('home')} className="flex items-center gap-2 sm:gap-3 group shrink-0">
+            <span className="relative shrink-0">
+              <img src={logoImg} alt="Sun Entrepreneurship Club logo" className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl sm:rounded-2xl object-cover ring-1 ring-gold-500/40 shadow-sm transition-transform duration-300 group-hover:scale-105" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-emerald-500 border-2 border-cream-50 dark:border-ink-950" />
             </span>
             <span className="text-left leading-none">
-              <span className="block font-display font-extrabold text-base sm:text-lg tracking-tight">
+              <span className="block font-display font-extrabold text-[13px] sm:text-base md:text-lg tracking-tight whitespace-nowrap">
                 Sun Entrepreneurship Club
               </span>
-              <span className="block font-mono text-[9px] tracking-[0.24em] uppercase opacity-60 mt-1">
+              <span className="block font-mono text-[8px] sm:text-[9px] tracking-[0.16em] sm:tracking-[0.24em] uppercase opacity-60 mt-0.5 sm:mt-1 whitespace-nowrap">
                 Sandip University · Nashik
               </span>
             </span>
@@ -305,11 +308,24 @@ export default function App() {
               Sun Entrepreneurship Club — turning raw student ideas into fundable ventures, on campus in Nashik.
             </p>
             <div className="flex gap-2">
-              {['fa-x-twitter', 'fa-instagram', 'fa-linkedin-in', 'fa-youtube'].map((s) => (
-                <span key={s} className="w-9 h-9 rounded-full border border-white/20 text-cream-100/85 flex items-center justify-center text-sm hover:text-gold-300 hover:border-gold-500/60 hover:shadow-glow-gold transition cursor-pointer">
-                  <i className={`fa-brands ${s}`} />
-                </span>
-              ))}
+              <a
+                href="https://www.instagram.com/sun_entrepreneurship_club?stkn=MTNrb3Zhd295Z2dmNw=="
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-9 h-9 rounded-full border border-white/20 text-cream-100/85 flex items-center justify-center text-sm hover:text-gold-300 hover:border-gold-500/60 hover:shadow-glow-gold transition cursor-pointer"
+              >
+                <i className="fa-brands fa-instagram" />
+              </a>
+              <a
+                href="https://chat.whatsapp.com/FEkzm8E1THuLUxrApdf0rU?s=qt&p=a&mlu=4&ilr=4"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="w-9 h-9 rounded-full border border-white/20 text-cream-100/85 flex items-center justify-center text-sm hover:text-gold-300 hover:border-gold-500/60 hover:shadow-glow-gold transition cursor-pointer"
+              >
+                <i className="fa-brands fa-whatsapp" />
+              </a>
             </div>
           </div>
 

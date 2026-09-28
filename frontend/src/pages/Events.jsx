@@ -5,10 +5,10 @@ import { Button } from '../components/Button';
 import { SectionHead } from '../components/SectionHead';
 import { api } from '../lib/api';
 
-// Badge theme per status: Present/Ongoing = live emerald, Upcoming = gold, Completed = muted.
+// Badge theme per status: Present/Ongoing/Open = live emerald, Upcoming = gold, Completed = muted.
 const statusStyle = (status = '') => {
   const s = status.toLowerCase();
-  if (s.includes('present') || s.includes('ongoing')) return { text: 'text-emerald-600 dark:text-emerald-300', dot: 'bg-emerald-500 animate-pulse', box: 'bg-emerald-500/10 border-emerald-500/30' };
+  if (s.includes('present') || s.includes('ongoing') || s.includes('open')) return { text: 'text-emerald-600 dark:text-emerald-300', dot: 'bg-emerald-500 animate-pulse', box: 'bg-emerald-500/10 border-emerald-500/30' };
   if (s.includes('completed')) return { text: 'text-slate-500 dark:text-slate-400', dot: 'bg-slate-400', box: 'bg-slate-500/10 border-slate-500/30' };
   return { text: 'text-gold-600 dark:text-gold-300', dot: 'bg-gold-500', box: 'bg-gold-500/10 border-gold-500/30' };
 };
@@ -19,34 +19,40 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
 
   const flagship = {
     title: 'Sun Launchpad 2026',
-    subtitle: "Sandip University's official student acceleration drive",
-    status: 'Ongoing / Present Event',
-    dates: 'Dates to be announced',
-    location: 'Sandip University Campus · SCIIE Hub, Nashik',
-    grantPool: 'Up to ₹1.5 Cr seed grants',
-    overview:
-      'Sun Launchpad 2026 is Sandip University’s official student acceleration drive designed to turn early-stage student ideas into fundable startups through hands-on guidance. No registered company is required to join, and you retain 100% equity.',
-    steps: [
-      { num: '01', title: 'Submit Your Idea', desc: 'Fill out the 5-minute registration form with your problem statement and proposed solution.' },
-      { num: '02', title: 'Mentorship & Sprints', desc: 'Work with mentors, refine your pitch deck format, and test your business assumptions.' },
-      { num: '03', title: 'Pitch On Stage', desc: 'Present in the competition rounds for feedback, incubation access, and seed grant pathways.' },
-    ],
+    tagline: 'IDEAS TODAY. IMPACT TOMORROW.',
+    pitch: 'Have an idea? Or already building something? Sun Launchpad is for you.',
+    status: 'Registration Open',
+    dates: '5 & 9 October 2026',
+    time: '10:00 AM',
+    location: 'S Building Seminar Hall, Sandip University, Nashik',
+    entry: 'Free for students',
+    participation: 'Students · Solo or Team',
     rounds: [
-      { num: '01', name: 'Idea & confidence pitch', focus: 'A 60-second pitch: problem, user, solution, vision. Judged on clarity and courage.' },
-      { num: '02', name: 'Business & commercialization', focus: 'Full business pitch before VCs: market, unit economics, moat and roadmap.' },
+      { num: 'Round 1', date: '5 October 2026', name: 'Idea to Pitch', focus: 'Present your raw concept or early prototype with clarity.' },
+      { num: 'Round 2', date: '9 October 2026', name: 'From Idea to Business', focus: 'Structure your solution, market direction, and business model.' },
+    ],
+    whatYouGet: [
+      { icon: 'fa-trophy', title: 'Trophies', desc: 'Awards for standout ideas and top pitch performers.' },
+      { icon: 'fa-certificate', title: 'Certificate for Every Participant', desc: 'Official certificate recognizing all participating student founders.' },
+      { icon: 'fa-microphone-lines', title: 'Pitch Experience', desc: 'Real stage pitch experience with constructive, real-world feedback.' },
+      { icon: 'fa-seedling', title: 'Incubation Opportunity', desc: 'Pathway to explore structured incubation and venture building support.' },
     ],
   };
 
   const programs = [
     {
       id: 1,
-      title: 'Sun Launchpad 2026',
+      title: 'SUN LAUNCHPAD 2026',
       edition: 'Sun Entrepreneurship Club',
-      category: 'Acceleration Drive',
-      status: 'Ongoing / Present Event',
-      time: 'Dates to be announced',
-      venue: 'Sandip University Campus',
-      desc: "Sandip University's flagship student acceleration drive. Submit your idea, receive mentorship, and pitch on stage.",
+      category: 'Idea & Pitch Program',
+      status: 'Registration Open',
+      eventType: 'Two-Round Pitch Program',
+      time: '5 & 9 Oct 2026 · 10:00 AM',
+      venue: 'S Building Seminar Hall',
+      desc: 'Have an idea or already building? Pitch in Round 1 (5 Oct) & Round 2 (9 Oct). Trophies, certificates & incubation opportunities.',
+      image: '/sun-launchpad-poster.jpg',
+      icon: 'fa-rocket',
+      actionType: 'register',
     },
     {
       id: 2,
@@ -54,25 +60,31 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
       edition: 'Sun Entrepreneurship Club',
       category: 'Incubation',
       status: 'Upcoming',
-      time: 'Dates to be announced',
+      eventType: 'Cohort Support',
+      time: 'To be announced',
       venue: 'Sandip University Campus',
-      desc: 'Structured incubation support for validated student startups, offering dedicated workspace, mentorship, and seed resources.',
+      desc: 'Structured incubation support for validated student ideas and ventures.',
+      icon: 'fa-seedling',
+      actionType: 'rsvp',
     },
     {
       id: 3,
       title: 'Alumni Meetup',
       edition: 'Sun Entrepreneurship Club',
-      category: 'Networking & Community',
+      category: 'Networking',
       status: 'Upcoming',
-      time: 'Dates to be announced',
+      eventType: 'Community Session',
+      time: 'To be announced',
       venue: 'Sandip University Campus',
-      desc: 'Interactive networking session connecting current student founders with university alumni entrepreneurs and industry mentors.',
+      desc: 'Interactive networking session connecting students with alumni and mentors.',
+      icon: 'fa-users',
+      actionType: 'rsvp',
     },
   ];
 
   const filters = [
     { label: 'All', value: 'ALL' },
-    { label: 'Ongoing / Present', value: 'Ongoing' },
+    { label: 'Registration Open', value: 'Open' },
     { label: 'Upcoming', value: 'Upcoming' },
   ];
 
@@ -108,48 +120,85 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
                 <span className="relative flex w-2.5 h-2.5"><span className="absolute w-full h-full rounded-full bg-emerald-400 animate-ping" /><span className="relative w-2.5 h-2.5 rounded-full bg-emerald-400" /></span>
                 Flagship · {flagship.status}
               </span>
-              <span className="font-mono text-[10px] font-bold tracking-[0.25em] px-3 py-1.5 rounded-full border border-gold-500/35 bg-gold-500/[0.1] text-gold-300">SUN × SCIIE</span>
+              <span className="font-mono text-[10px] font-bold tracking-[0.25em] px-3 py-1.5 rounded-full border border-gold-500/35 bg-gold-500/[0.1] text-gold-300">
+                {flagship.tagline}
+              </span>
             </div>
 
-            <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-5 text-cream-50">Sun Launchpad <span className="text-gold-300 drop-shadow-[0_0_18px_rgba(221,184,78,0.45)]">2026</span></h2>
-            <p className="font-mono text-xs text-emerald-300 mt-2 uppercase tracking-wider">{flagship.subtitle}</p>
-            <p className="text-cream-100/80 text-sm sm:text-base leading-relaxed mt-4 max-w-3xl">{flagship.overview}</p>
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-5 text-cream-50">
+              Sun Launchpad <span className="text-gold-300 drop-shadow-[0_0_18px_rgba(221,184,78,0.45)]">2026</span>
+            </h2>
+            <p className="font-display text-sm sm:text-base text-emerald-300 mt-2 font-semibold">
+              &ldquo;{flagship.pitch}&rdquo;
+            </p>
 
-            {/* What students need to do */}
-            <div className="mt-8 space-y-3">
-              <div className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-gold-300">What Students Need To Do</div>
-              <div className="grid sm:grid-cols-3 gap-3">
-                {flagship.steps.map((st) => (
-                  <div key={st.num} className="rounded-2xl border border-white/20 bg-white/[0.05] p-4">
-                    <div className="font-display text-gold-300 font-extrabold text-sm">{st.num}</div>
-                    <div className="font-display font-bold mt-1 text-sm text-cream-50">{st.title}</div>
-                    <p className="text-xs text-cream-100/60 mt-1 leading-relaxed">{st.desc}</p>
+            {/* Event Key Information Blocks */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-7 font-mono text-xs">
+              <div className="rounded-2xl border border-white/15 bg-white/[0.05] p-4 flex items-start gap-3">
+                <i className="fa-solid fa-clock text-gold-300 mt-0.5 text-sm" />
+                <div>
+                  <div className="text-[10px] tracking-[0.2em] text-cream-100/45 uppercase font-bold">Event Time</div>
+                  <div className="mt-1 text-cream-50 font-bold">{flagship.time}</div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/[0.05] p-4 flex items-start gap-3">
+                <i className="fa-solid fa-location-dot text-gold-300 mt-0.5 text-sm" />
+                <div>
+                  <div className="text-[10px] tracking-[0.2em] text-cream-100/45 uppercase font-bold">Venue</div>
+                  <div className="mt-1 text-cream-50 font-bold leading-snug">{flagship.location}</div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/[0.05] p-4 flex items-start gap-3">
+                <i className="fa-solid fa-users text-gold-300 mt-0.5 text-sm" />
+                <div>
+                  <div className="text-[10px] tracking-[0.2em] text-cream-100/45 uppercase font-bold">Participation</div>
+                  <div className="mt-1 text-cream-50 font-bold">{flagship.participation}</div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/[0.05] p-4 flex items-start gap-3">
+                <i className="fa-solid fa-ticket text-gold-300 mt-0.5 text-sm" />
+                <div>
+                  <div className="text-[10px] tracking-[0.2em] text-cream-100/45 uppercase font-bold">Entry</div>
+                  <div className="mt-1 text-cream-50 font-bold">{flagship.entry}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Event Rounds / The Journey */}
+            <div className="mt-7 space-y-3">
+              <div className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-gold-300">
+                The Journey · Event Rounds
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3.5">
+                {flagship.rounds.map((r) => (
+                  <div key={r.num} className="rounded-2xl border border-white/20 bg-white/[0.06] p-5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display text-gold-300 font-extrabold text-sm uppercase tracking-wider">{r.num}</span>
+                      <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                        {r.date}
+                      </span>
+                    </div>
+                    <div className="font-display font-bold mt-2 text-base text-cream-50">{r.name}</div>
+                    <p className="text-xs text-cream-100/70 mt-1 leading-relaxed">{r.focus}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-3 mt-4 font-mono text-xs">
-              {[
-                { icon: 'fa-location-dot', k: 'Venue', v: flagship.location },
-                { icon: 'fa-clock', k: 'When', v: flagship.dates },
-                { icon: 'fa-sack-dollar', k: 'Grants', v: flagship.grantPool },
-              ].map((m) => (
-                <div key={m.k} className="rounded-2xl border border-white/20 bg-white/[0.06] p-4 flex gap-3">
-                  <i className={`fa-solid ${m.icon} text-gold-300 mt-0.5`} />
-                  <div><div className="text-[10px] tracking-[0.2em] text-cream-100/45">{m.k.toUpperCase()}</div><div className="mt-1 text-cream-50">{m.v}</div></div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-3 mt-3">
-              {flagship.rounds.map((r) => (
-                <div key={r.num} className="rounded-2xl border border-white/20 bg-white/[0.05] p-5">
-                  <div className="font-display text-gold-300 font-extrabold text-sm">Stage {r.num}</div>
-                  <div className="font-display font-bold mt-1">{r.name}</div>
-                  <p className="text-sm text-cream-100/60 mt-1.5 leading-relaxed">{r.focus}</p>
-                </div>
-              ))}
+            {/* What You Get */}
+            <div className="mt-7 space-y-3">
+              <div className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-gold-300">
+                What You Get
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {flagship.whatYouGet.map((w) => (
+                  <div key={w.title} className="rounded-2xl border border-white/15 bg-white/[0.05] p-4">
+                    <i className={`fa-solid ${w.icon} text-gold-300 text-lg mb-2 block`} />
+                    <div className="font-display font-bold text-sm text-cream-50">{w.title}</div>
+                    <p className="text-xs text-cream-100/60 mt-1 leading-relaxed">{w.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
@@ -157,7 +206,7 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
                 Apply Now <i className="fa-solid fa-arrow-right text-xs" />
               </Button>
               <Button variant="secondary" onClick={() => openRsvpModal(flagship.title, flagship.dates, flagship.location)} className="!text-cream-50 !border-white/20 hover:!border-emerald-400">
-                <i className="fa-solid fa-bell" /> Notify me at launch
+                <i className="fa-solid fa-bell" /> Get Event Updates
               </Button>
             </div>
           </div>
@@ -188,34 +237,92 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
 
         <AnimatePresence mode="popLayout">
           {filtered.length > 0 ? (
-            <motion.div layout className="grid md:grid-cols-3 gap-5">
+            <motion.div layout className="grid md:grid-cols-3 gap-6">
               {filtered.map((e) => (
                 <motion.div key={e.id} layout initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }}>
-                  <Card hover hairline className="h-full flex flex-col">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">{e.category}</span>
-                      {(() => {
-                        const s = statusStyle(e.status);
-                        return (
-                          <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${s.text} ${s.box}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{e.status}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div className="font-mono text-[10px] tracking-[0.22em] opacity-45 mt-4">{e.edition.toUpperCase()}</div>
-                    <h3 className="font-display text-xl font-bold mt-1 text-emerald-950 dark:text-white">{e.title}</h3>
-                    <p className="text-sm section-subtitle mt-2 flex-grow">{e.desc}</p>
-                    <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-1.5 font-mono text-[11px] opacity-70">
-                      <div><i className="fa-solid fa-clock mr-2 text-gold-500" />{e.time}</div>
-                      <div><i className="fa-solid fa-location-dot mr-2 text-gold-500" />{e.venue}</div>
-                    </div>
-                    <div className="mt-5">
-                      {e.status.includes('Present') || e.status.includes('Ongoing') ? (
-                        <Button onClick={() => navigateTo('register')} className="w-full">Apply Now <i className="fa-solid fa-arrow-right text-xs" /></Button>
-                      ) : (
-                        <Button variant="outline" onClick={() => openRsvpModal(e.title, e.time, e.venue, null)} className="w-full">Get event alert</Button>
+                  <Card hover hairline className="h-full flex flex-col !p-0 overflow-hidden group">
+                    {/* Event Visual Thumbnail */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-b from-emerald-950/70 to-ink-950/90 border-b border-black/10 dark:border-white/10 flex items-center justify-center">
+                      {/* Theme-based branded thumbnail background */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-emerald-900/30 to-ink-950/80">
+                        <span className="w-12 h-12 rounded-2xl bg-gradient-brand flex items-center justify-center border-glow mb-2 group-hover:scale-105 transition-transform duration-300">
+                          <i className={`fa-solid ${e.icon || 'fa-calendar-star'} text-lg text-gold-300`} />
+                        </span>
+                        <span className="font-display font-bold text-xs tracking-wider text-cream-100 uppercase">{e.title}</span>
+                        <span className="text-[10px] font-mono text-emerald-300/70 uppercase tracking-widest mt-0.5">{e.category}</span>
+                      </div>
+
+                      {/* Official poster image if provided */}
+                      {e.image && (
+                        <img
+                          src={e.image}
+                          alt={e.title}
+                          onLoad={(el) => { el.currentTarget.style.opacity = '1'; }}
+                          onError={(el) => {
+                            if (!el.currentTarget.dataset.triedPng) {
+                              el.currentTarget.dataset.triedPng = 'true';
+                              el.currentTarget.src = '/sun-launchpad-poster.png';
+                            } else {
+                              el.currentTarget.style.display = 'none';
+                            }
+                          }}
+                          style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
+                          className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        />
                       )}
+
+                      {/* Top Badges */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-10">
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] px-2.5 py-1 rounded-full bg-ink-950/85 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
+                          {e.category}
+                        </span>
+                        {(() => {
+                          const s = statusStyle(e.status);
+                          return (
+                            <span className={`inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-md bg-ink-950/85 ${s.text} ${s.box}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{e.status}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Event Card Content */}
+                    <div className="p-5 sm:p-6 flex flex-col flex-grow">
+                      <div className="font-mono text-[10px] tracking-[0.2em] text-gold-500 dark:text-gold-400 uppercase font-semibold">
+                        {e.eventType || e.category}
+                      </div>
+
+                      <h3 className="font-display text-xl font-extrabold text-emerald-950 dark:text-white mt-1 group-hover:text-gold-400 transition-colors">
+                        {e.title}
+                      </h3>
+
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-cream-100/70 mt-2 flex-grow line-clamp-2 leading-relaxed">
+                        {e.desc}
+                      </p>
+
+                      <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-slate-500 dark:text-cream-100/60">
+                        <div className="flex items-center gap-1.5">
+                          <i className="fa-solid fa-clock text-gold-500 text-[10px]" />
+                          <span>{e.time}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <i className="fa-solid fa-location-dot text-gold-500 text-[10px]" />
+                          <span>{e.venue}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 pt-1">
+                        {e.actionType === 'register' ? (
+                          <Button variant="gold" onClick={() => navigateTo('register')} className="w-full !py-2.5 !text-xs font-bold shine-wrap">
+                            Register Your Idea <i className="fa-solid fa-arrow-right text-xs" />
+                          </Button>
+                        ) : (
+                          <Button variant="outline" onClick={() => openRsvpModal(e.title, e.time, e.venue, null)} className="w-full !py-2.5 !text-xs">
+                            View Event <i className="fa-solid fa-arrow-right text-xs" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 </motion.div>

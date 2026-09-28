@@ -80,18 +80,18 @@ export const Team = ({ navigateTo }) => {
   const [cat, setCat] = useState('ALL');
 
   const fallbackMembers = [
-    { name: 'Rishi Kumar Mishra', role: 'President', category: 'Presidents', year: '3rd Year', branch: 'Computer Science & Engineering', bio: 'Owns the vision — partnerships, incubation strategy and the ecosystem roadmap.' },
-    { name: 'Atul Sahane', role: 'Vice President', category: 'Presidents', year: '3rd Year', branch: 'Engineering & Technology', bio: 'Runs cross-team operations, pitch programs and founder support.' },
-    { name: 'Saurav Jha', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'School of Management Studies', bio: 'Keeps the institution running — compliance, records, official correspondence.' },
-    { name: 'Shaik Maksud Ahmad', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'Computer Science & Engineering', bio: 'Connects teams, outreach and day-to-day operational tracking.' },
-    { name: 'Jahan Ara Khan', role: 'Treasurer', category: 'Treasurers', year: '3rd Year', branch: 'School of Management Studies', bio: 'Guards the money — budgets, event spends and grant tracking.' },
+    { name: 'Rishi Kumar Mishra', role: 'President', category: 'Presidents', year: '3rd Year', branch: 'N/A', bio: 'Owns the vision — partnerships, incubation strategy and the ecosystem roadmap.' },
+    { name: 'Atul Sahane', role: 'Vice President', category: 'Presidents', year: '3rd Year', branch: 'N/A', bio: 'Runs cross-team operations, pitch programs and founder support.' },
+    { name: 'Saurav Jha', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'N/A', bio: 'Keeps the institution running — compliance, records, official correspondence.' },
+    { name: 'Shaik Maksud Ahmad', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'N/A', bio: 'Connects teams, outreach and day-to-day operational tracking.' },
+    { name: 'Jahan Ara Khan', role: 'Treasurer', category: 'Treasurers', year: '3rd Year', branch: 'N/A', bio: 'Guards the money — budgets, event spends and grant tracking.' },
     { name: 'M.D. Praveen', role: 'Technical Team Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Architects the portals, platforms and digital infrastructure.' },
     { name: 'Ashirwad Deshmukh', role: 'Technical Team Co-Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Co-leads backend integrations and platform reliability.' },
     { name: 'Jayesh Ranjit Patil', role: 'Technical Team Co-Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Crafts frontend interfaces and design systems.' },
     { name: 'Darshana Kushwaha', role: 'Event Team Head', category: 'Event & Marketing', year: '3rd Year', branch: 'N/A', bio: 'Designs pitch nights, workshops and venue experiences.' },
     { name: 'Manish Patil', role: 'Event Team Co-Head', category: 'Event & Marketing', year: '3rd Year', branch: 'N/A', bio: 'Owns logistics, hospitality and stage management.' },
     { name: 'Komal Pimple', role: 'Event Team Member', category: 'Event & Marketing', year: 'N/A', branch: 'N/A', bio: 'Runs registrations and on-ground coordination.' },
-    { name: 'Aparna Sambhari', role: 'Marketing Team Co-Head', category: 'Event & Marketing', year: '3rd Year', branch: 'N/A', bio: 'Leads campaigns that fill every seat on pitch night.' },
+    { name: 'Aparna Sambhari', role: 'Marketing Team Head', category: 'Event & Marketing', year: '3rd Year', branch: 'N/A', bio: 'Leads campaigns that fill every seat on pitch night.' },
     { name: 'Ankit Tiwari', role: 'Social Media Team Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Directs channels, branding and announcements.' },
     { name: 'Mansi Nikumbh', role: 'Social Media Team Co-Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Creates the visuals and content the campus shares.' },
     { name: 'Pratima', role: 'Student Engagement Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Guides first-timers from signup to stage-ready.' },
@@ -106,11 +106,28 @@ export const Team = ({ navigateTo }) => {
     { name: 'Yash Dange', role: 'Sponsorship Team Co-Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Manages partners and the prize pool.' },
   ];
 
-  // Live roster from the admin panel; falls back to built-in list when offline.
+  // Live roster from the admin panel; merges with the built-in list so all 24 members are always present in production.
   const [remoteMembers, setRemoteMembers] = useState(null);
   useEffect(() => {
     api.teamPublic()
-      .then((d) => setRemoteMembers(d.items))
+      .then((d) => {
+        if (d && Array.isArray(d.items) && d.items.length > 0) {
+          // Merge by name: keep all 24 fallbackMembers as the base, and overlay any remote updates (e.g. photos or details from admin)
+          const remoteMap = new Map(d.items.map((m) => [(m.name || '').toLowerCase().trim(), m]));
+          const merged = fallbackMembers.map((fb) => {
+            const key = (fb.name || '').toLowerCase().trim();
+            const remote = remoteMap.get(key);
+            return remote ? { ...fb, ...remote } : fb;
+          });
+          // Also append any extra members added through the admin panel not in fallback
+          const fbKeys = new Set(fallbackMembers.map((m) => (m.name || '').toLowerCase().trim()));
+          d.items.forEach((m) => {
+            const key = (m.name || '').toLowerCase().trim();
+            if (!fbKeys.has(key)) merged.push(m);
+          });
+          setRemoteMembers(merged);
+        }
+      })
       .catch(() => {});
   }, []);
   const teamMembers = remoteMembers || fallbackMembers;
@@ -141,6 +158,12 @@ export const Team = ({ navigateTo }) => {
 
   const opTeamsDef = [
     {
+      id: 'Sponsorship',
+      name: 'Sponsorship Team',
+      desc: 'Building corporate alliances, industry sponsorships, and partner relations.',
+      filter: (m) => (m.category || '').toLowerCase() === 'sponsorship' || (m.role || '').toLowerCase().includes('sponsorship'),
+    },
+    {
       id: 'Technical',
       name: 'Technical Team',
       desc: 'Architecting web platforms, student portals, and digital infrastructure.',
@@ -163,12 +186,6 @@ export const Team = ({ navigateTo }) => {
       name: 'Media & Production Team',
       desc: 'Capturing event moments, cinematography, and post-production video editing.',
       filter: (m) => (m.category || '').toLowerCase() === 'media & production' || (m.role || '').toLowerCase().includes('video'),
-    },
-    {
-      id: 'Sponsorship',
-      name: 'Sponsorship Team',
-      desc: 'Building corporate alliances, industry sponsorships, and partner relations.',
-      filter: (m) => (m.category || '').toLowerCase() === 'sponsorship' || (m.role || '').toLowerCase().includes('sponsorship'),
     },
   ];
 
@@ -205,8 +222,8 @@ export const Team = ({ navigateTo }) => {
         transition={{ duration: 0.32 }}
       >
         <Card hover hairline className="h-full flex flex-col">
-          {/* Prominent Photo Showcase */}
-          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/[0.04] dark:bg-white/[0.04] border border-black/10 dark:border-white/10 mb-5 group/img shrink-0">
+          {/* Photo Showcase without redundant inner border box */}
+          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 group/img shrink-0">
             {photo ? (
               <img
                 src={photo}
@@ -234,17 +251,18 @@ export const Team = ({ navigateTo }) => {
             <div className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-gold-600 dark:text-gold-300 mt-1">
               {m.role}
             </div>
-            <p className="text-sm section-subtitle mt-3 leading-relaxed flex-grow">
-              {m.bio}
-            </p>
 
-            <div className="flex flex-wrap gap-2 mt-4 pt-3.5 border-t border-black/10 dark:border-white/10 font-mono text-[10px] font-bold">
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                {m.year}
-              </span>
-              <span className="px-2.5 py-1 rounded-full border border-black/10 dark:border-white/15 opacity-70 max-w-full truncate" title={m.branch}>
-                {m.branch}
-              </span>
+            <div className="flex flex-wrap gap-2 mt-auto pt-3.5 border-t border-black/10 dark:border-white/10 font-mono text-[10px] font-bold">
+              {m.year && m.year !== 'N/A' && (
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                  {m.year}
+                </span>
+              )}
+              {!isGoverning(m) && m.branch && m.branch !== 'N/A' && (
+                <span className="px-2.5 py-1 rounded-full border border-black/10 dark:border-white/15 opacity-70 max-w-full truncate" title={m.branch}>
+                  {m.branch}
+                </span>
+              )}
             </div>
 
             {(m.tags || []).length > 0 && (

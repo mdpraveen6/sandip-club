@@ -412,7 +412,7 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                     </Field>
 
                     {/* PPT Template Access + Pitch Deck Upload */}
-                    <Field label="Pitch Deck / Proposal (Optional)" span>
+                    <Field label="Pitch Deck / Supporting Document (Optional)" span>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs opacity-60">Upload your deck or preview format</span>
                         <button
@@ -420,10 +420,11 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                           onClick={() => setShowPptModal(true)}
                           className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-gold-600 dark:text-gold-300 hover:text-gold-500 transition"
                         >
-                          <i className="fa-solid fa-file-powerpoint text-xs" /> View / Download PPT Format
+                          <i className="fa-solid fa-list-check text-xs" /> View Slide Outline
                         </button>
                       </div>
 
+                      {/* Student Upload Field */}
                       <div className="border-2 border-dashed border-black/15 dark:border-emerald-500/25 rounded-2xl p-6 text-center hover:border-gold-500 transition relative bg-black/[0.02] dark:bg-white/[0.02]">
                         <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                         <div className="space-y-1.5 pointer-events-none">
@@ -431,6 +432,26 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                           <p className="text-sm font-bold">{fileName ? `Attached: ${fileName}` : 'Drop your deck here, or click to browse'}</p>
                           <p className="text-[11px] font-mono opacity-50">PDF / PPTX · up to 15MB</p>
                         </div>
+                      </div>
+
+                      {/* Official SUN Launchpad Pitch Deck Access */}
+                      <div className="mt-3 p-3.5 rounded-xl border border-gold-500/30 bg-gold-500/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0">
+                            <i className="fa-solid fa-file-powerpoint text-sm" />
+                          </span>
+                          <div>
+                            <div className="font-display font-bold text-xs text-emerald-950 dark:text-cream-50">Official SUN Launchpad Pitch Deck</div>
+                            <div className="text-[11px] text-slate-500 dark:text-cream-100/60 font-sans">Read or review the official pitch deck before applying</div>
+                          </div>
+                        </div>
+                        <a
+                          href="/Sun_Launchpad_2026_Pitch_Deck_Template.pptx"
+                          download="Sun_Launchpad_2026_Pitch_Deck_Template.pptx"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-[11px] font-bold bg-gradient-gold text-[#1A1405] hover:opacity-90 transition shrink-0 shadow-sm"
+                        >
+                          <i className="fa-solid fa-arrow-down-to-bracket text-xs" /> View Pitch Deck →
+                        </a>
                       </div>
                     </Field>
                   </div>
@@ -478,10 +499,17 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button variant="gold" onClick={handleDownloadPptTemplate} className="w-full !py-2.5 !text-xs">
-              <i className="fa-solid fa-download mr-1.5" /> Download Template Outline (.txt)
+            <a
+              href="/Sun_Launchpad_2026_Pitch_Deck_Template.pptx"
+              download="Sun_Launchpad_2026_Pitch_Deck_Template.pptx"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-display text-xs font-bold bg-gradient-gold text-[#1A1405] hover:opacity-90 transition text-center w-full"
+            >
+              <i className="fa-solid fa-file-powerpoint mr-1" /> Download Official PPTX
+            </a>
+            <Button variant="secondary" onClick={handleDownloadPptTemplate} className="w-full !py-2.5 !text-xs">
+              <i className="fa-solid fa-download mr-1" /> Outline (.txt)
             </Button>
-            <Button variant="outline" onClick={() => setShowPptModal(false)} className="w-full !py-2.5 !text-xs">
+            <Button variant="outline" onClick={() => setShowPptModal(false)} className="w-full sm:w-auto !py-2.5 !text-xs">
               Close
             </Button>
           </div>

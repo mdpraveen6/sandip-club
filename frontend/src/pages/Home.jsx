@@ -95,7 +95,7 @@ const sprint = [
           </motion.h1>
 
           <motion.p variants={rise} custom={2} className="section-subtitle text-base sm:text-lg mt-5 max-w-xl">
-            Sun Entrepreneurship Club has helped students turn early-stage ideas into fundable startup through hands-on guidance. No registered company is required to join and you retain 100% equity.
+            Sun Entrepreneurship Club is a student-led platform focused on entrepreneurship, ideas, learning, guidance, events and opportunities that help students explore the journey of building ventures.
           </motion.p>
 
           <motion.div variants={rise} custom={3} className="flex flex-col sm:flex-row gap-3 mt-8">
@@ -128,46 +128,76 @@ const sprint = [
             <div className="absolute -inset-6 bg-gradient-to-br from-emerald-500/20 via-gold-500/15 to-transparent blur-2xl rounded-[32px]" />
             <div className="relative rounded-[26px] overflow-hidden spotlight text-white noise border border-white/10">
               <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-gold-400 to-emerald-500 bg-[length:200%_100%] animate-gradient-x" />
-              <div className="p-6 sm:p-7">
-                <div className="flex items-center justify-between gap-2">
+              <div className="p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-bold uppercase tracking-wider">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Ongoing / Current Event
+                    Registration Open
                   </span>
-                  <span className="font-mono text-[10px] tracking-[0.2em] text-gold-300 uppercase">FLAGSHIP</span>
+                  <span className="font-mono text-[10px] tracking-[0.2em] text-gold-300 uppercase">FEATURED EVENT</span>
                 </div>
-                <div className="mt-5">
-                  <div className="font-mono text-[10px] tracking-[0.2em] text-cream-100/50 uppercase">FEATURED EVENT</div>
-                  <h3 className="font-display text-2xl font-extrabold text-cream-50 mt-1 leading-tight">
-                    Sun Launchpad <span className="text-gold-300 drop-shadow-[0_0_12px_rgba(221,184,78,0.4)]">2026</span>
+
+                {/* Promotional Poster / Visual */}
+                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-emerald-950/60 to-ink-950/90 border border-white/10 mb-4 aspect-[16/10] flex items-center justify-center">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-b from-emerald-900/30 to-ink-950/80">
+                    <span className="w-11 h-11 rounded-2xl bg-gradient-brand flex items-center justify-center border-glow mb-2">
+                      <i className="fa-solid fa-rocket text-lg text-gold-300" />
+                    </span>
+                    <span className="font-display font-extrabold text-sm tracking-wide text-white">SUN LAUNCHPAD 2026</span>
+                    <span className="text-[10px] font-mono text-emerald-300/80 mt-0.5 uppercase tracking-wider">Student Idea &amp; Pitch Program</span>
+                  </div>
+                  <img
+                    src="/sun-launchpad-event.png"
+                    alt="SUN Launchpad 2026"
+                    onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
+                    onError={(e) => {
+                      if (!e.currentTarget.dataset.triedFallback) {
+                        e.currentTarget.dataset.triedFallback = 'true';
+                        e.currentTarget.src = '/sun-launchpad-event.png.png';
+                      } else {
+                        e.currentTarget.style.display = 'none';
+                      }
+                    }}
+                    style={{ opacity: 1, transition: 'opacity 0.3s ease' }}
+                    className="absolute inset-0 w-full h-full object-cover object-center"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-display text-2xl font-extrabold text-cream-50 leading-tight">
+                    SUN LAUNCHPAD <span className="text-gold-300 drop-shadow-[0_0_12px_rgba(221,184,78,0.4)]">2026</span>
                   </h3>
-                  <p className="text-xs text-cream-100/80 mt-2 leading-relaxed font-sans">
-                    Sandip University&apos;s official student acceleration drive. Submit your idea, get hands-on guidance, and pitch on stage.
+                  <p className="text-xs text-cream-100/80 mt-1.5 leading-relaxed font-sans">
+                    A student-focused idea and pitch program by SUN Entrepreneurship Club.
                   </p>
                 </div>
 
-                <div className="gold-rule my-4 opacity-60" />
+                <div className="gold-rule my-3.5 opacity-60" />
 
-                <div className="space-y-2 font-mono text-[11px]">
-                  <div className="flex items-center justify-between py-1 border-b border-white/5">
+                <div className="space-y-1.5 font-mono text-[11px]">
+                  <div className="flex items-center justify-between py-0.5 border-b border-white/5">
                     <span className="text-cream-100/50">STATUS</span>
                     <span className="text-emerald-400 font-bold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Ongoing / Present Event
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Registration Open
                     </span>
                   </div>
-                  <div className="flex items-center justify-between py-1 border-b border-white/5">
-                    <span className="text-cream-100/50">DATES</span>
-                    <span className="text-cream-50">Dates to be announced</span>
+                  <div className="flex items-center justify-between py-0.5 border-b border-white/5">
+                    <span className="text-cream-100/50">DATE</span>
+                    <span className="text-cream-50 font-semibold">5 &amp; 9 October 2026</span>
                   </div>
-                  <div className="flex items-center justify-between py-1">
+                  <div className="flex items-center justify-between py-0.5 border-b border-white/5">
+                    <span className="text-cream-100/50">TIME</span>
+                    <span className="text-cream-50 font-semibold">10:00 AM</span>
+                  </div>
+                  <div className="flex items-center justify-between py-0.5">
                     <span className="text-cream-100/50">VENUE</span>
-                    <span className="text-cream-50">Sandip University Campus</span>
+                    <span className="text-cream-50 font-semibold truncate max-w-[210px]" title="S Building Seminar Hall, Sandip University, Nashik">S Building Seminar Hall</span>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-1">
+                <div className="mt-4 pt-1">
                   <Button variant="gold" onClick={() => navigateTo('register')} className="w-full !py-2.5 !text-xs font-bold shine-wrap">
-                    Apply Now <i className="fa-solid fa-arrow-right text-xs" />
+                    Register Your Idea <i className="fa-solid fa-arrow-right text-xs" />
                   </Button>
                 </div>
               </div>
