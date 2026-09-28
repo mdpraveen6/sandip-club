@@ -4,10 +4,12 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { api, photoUrl } from '../lib/api';
 
-// Local team member photo imports from frontend/src/images/team/ directory. These are used as a fallback when the member's photoUrl is not available from the API.
-import rishiImg from '../images/team/RISHI KUMAR MISHRA.jpg';
+// Local team member photo imports from frontend/src/images/team/ directory.
+// The photo file 'Saurav jha.jpg' corresponds to Rishi Kumar Mishra (President),
+// and 'RISHI KUMAR MISHRA.jpg' corresponds to Saurav Jha (Secretary).
+import rishiImg from '../images/team/Saurav jha.jpg';
 import atulImg from '../images/team/Atul Sahane.jpg';
-import sauravImg from '../images/team/Saurav jha.jpg';
+import sauravImg from '../images/team/RISHI KUMAR MISHRA.jpg';
 import maksudImg from '../images/team/Shaik Maksud Ahmad.jpg';
 import jahanImg from '../images/team/Jahan Ara khan.jpg';
 import praveenImg from '../images/team/M.D Praveen.jpg';
@@ -198,9 +200,10 @@ export const Team = ({ navigateTo }) => {
   const initials = (n) => n.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
   const getMemberPhoto = (m) => {
-    if (m.photoUrl) return photoUrl(m.photoUrl);
     const norm = (m.name || '').toLowerCase().trim();
-    return LOCAL_PHOTOS[norm] || null;
+    if (LOCAL_PHOTOS[norm]) return LOCAL_PHOTOS[norm];
+    if (m.photoUrl) return photoUrl(m.photoUrl);
+    return null;
   };
 
   const getPhotoPosition = (m) => {
