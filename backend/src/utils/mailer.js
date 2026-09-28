@@ -419,3 +419,7 @@ async function sendNewRegistrationAlert(reg, extraRecipients = []) {
     return { sent: false, error: withTarget(err) };
   }
 }
+module.exports = {
+  sendApprovalEmail,
+  sendNewRegistrationAlert,
+};
