@@ -35,7 +35,20 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
       { icon: 'fa-trophy', title: 'Trophies', desc: 'Awards for standout ideas and top pitch performers.' },
       { icon: 'fa-certificate', title: 'Certificate for Every Participant', desc: 'Official certificate recognizing all participating student founders.' },
       { icon: 'fa-microphone-lines', title: 'Pitch Experience', desc: 'Real stage pitch experience with constructive, real-world feedback.' },
-      { icon: 'fa-seedling', title: 'Incubation Opportunity', desc: 'Pathway to explore structured incubation and venture building support.' },
+      {
+        icon: 'fa-seedling',
+        title: 'Incubation Opportunity',
+        desc: (
+          <>
+            Top 6 ideas will be selected:
+            <span className="block my-1 pl-1 text-[11px] text-cream-100/75 leading-tight">
+              • 3 promising ideas<br />
+              • 3 ready MVP/prototype ideas
+            </span>
+            Selected teams will receive 6 months of free pre-incubation support from Sandip TBI.
+          </>
+        ),
+      },
     ],
   };
 
@@ -131,6 +144,27 @@ export const Events = ({ openRsvpModal, navigateTo }) => {
             <p className="font-display text-sm sm:text-base text-emerald-300 mt-2 font-semibold">
               &ldquo;{flagship.pitch}&rdquo;
             </p>
+
+            {/* In Collaboration With Indicator */}
+            <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full bg-white/[0.06] border border-gold-500/30 text-cream-100/90 text-xs">
+              <span className="font-mono text-[10px] tracking-wider uppercase text-gold-300 font-semibold">In Collaboration With</span>
+              <span className="text-gold-500/40">·</span>
+              <span className="inline-flex items-center gap-1.5 font-display font-bold text-cream-50">
+                <span className="inline-block bg-white rounded px-1.5 py-0.5 shadow-sm">
+                  <img
+                    src="/sandip%20tbi%20logo.jpeg"
+                    alt="Sandip TBI"
+                    className="h-3.5 w-auto object-contain"
+                    onError={(e) => {
+                      if (e.currentTarget.src.includes('%20')) {
+                        e.currentTarget.src = '/sandip tbi logo.jpeg';
+                      }
+                    }}
+                  />
+                </span>
+                Sandip TBI
+              </span>
+            </div>
 
             {/* Event Key Information Blocks */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-7 font-mono text-xs">

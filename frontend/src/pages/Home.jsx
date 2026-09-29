@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { SectionHead } from '../components/SectionHead';
+import { CollaboratorsSection } from '../components/CollaboratorsSection';
 
 const rise = {
   hidden: { opacity: 0, y: 30 },
@@ -98,7 +99,39 @@ const sprint = [
             Sun Entrepreneurship Club is a student-led platform focused on entrepreneurship, ideas, learning, guidance, events and opportunities that help students explore the journey of building ventures.
           </motion.p>
 
-          <motion.div variants={rise} custom={3} className="flex flex-col sm:flex-row gap-3 mt-8">
+          {/* ============ IN COLLABORATION WITH SANDIP TBI ============ */}
+          <motion.div
+            variants={rise}
+            custom={2.5}
+            className="mt-6 max-w-xl"
+          >
+            <div className="relative rounded-2xl p-4 sm:p-5 text-center border border-gold-500/40 bg-gradient-to-b from-[#0c241a] via-[#071712] to-[#040e0b] shadow-[0_0_30px_-8px_rgba(221,184,78,0.22)] backdrop-blur-xl card-hairline overflow-hidden">
+              <div className="pointer-events-none absolute -top-14 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full bg-gold-500/10 blur-xl" />
+
+              <div className="relative flex items-center justify-center gap-2.5 mb-3">
+                <span className="h-px w-6 sm:w-10 bg-gradient-to-r from-transparent to-gold-400/60" />
+                <span className="font-mono text-[9px] sm:text-[10px] font-bold tracking-[0.24em] text-gold-300 uppercase">
+                  IN COLLABORATION WITH
+                </span>
+                <span className="h-px w-6 sm:w-10 bg-gradient-to-l from-transparent to-gold-400/60" />
+              </div>
+
+              <div className="relative inline-flex items-center justify-center bg-white rounded-xl px-5 sm:px-7 py-2.5 shadow-md shadow-black/40 border border-gold-500/30 transition-transform duration-300 hover:scale-[1.01]">
+                <img
+                  src="/sandip%20tbi%20logo.jpeg"
+                  alt="Sandip TBI - Technology Business Incubator"
+                  className="h-9 sm:h-11 w-auto max-w-full object-contain"
+                  onError={(e) => {
+                    if (e.currentTarget.src.includes('%20')) {
+                      e.currentTarget.src = '/sandip tbi logo.jpeg';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div variants={rise} custom={3} className="flex flex-col sm:flex-row gap-3 mt-7">
             <Button variant="gold" onClick={() => navigateTo('register')} className="shine-wrap">
               Apply Now <i className="fa-solid fa-arrow-right text-xs" />
             </Button>
@@ -476,6 +509,9 @@ const sprint = [
           ))}
         </div>
       </section>
+
+      {/* ============ OUR COLLABORATORS ============ */}
+      <CollaboratorsSection />
 
       {/* ============ FINAL CTA ============ */}
       <motion.section initial={{ opacity: 0, y: 36 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-70px' }} transition={{ duration: 0.7 }} className="pt-20 sm:pt-24 pb-10">

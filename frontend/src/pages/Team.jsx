@@ -21,7 +21,7 @@ import pratimaImg from '../images/team/Pratima.png';
 import komalSonawaneImg from '../images/team/Komal Sonawane.jpg';
 import siddamImg from '../images/team/Siddam Vaibhav.jpg';
 import rohanImg from '../images/team/Rohan kolla.jpg';
-import tejasImg from '../images/team/Tejas Adhav Patil.jpg';
+import tejasImg from '../images/team/Tejas Adhav Patil.png';
 import yashImg from '../images/team/Yash dange.jpg';
 import prathameshImg from '../images/team/Prathamesh patil.jpg';
 import krishImg from '../images/team/Krish.jpg';

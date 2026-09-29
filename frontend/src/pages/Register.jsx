@@ -306,7 +306,7 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                     )}
                     <Field label="Academic year"><select name="academicYear" value={formData.academicYear} onChange={handleChange} className="field">{academicYears.map((y) => <option key={y} value={y}>{y}</option>)}</select></Field>
                     <Field label="Gender"><select name="gender" value={formData.gender} onChange={handleChange} className="field"><option>Male</option><option>Female</option><option>Other / Prefer not to say</option></select></Field>
-                    <Field label="Sandip email" req><input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="name@sandipuniversity.edu.in" className="field" /></Field>
+                    <Field label="Sandip email" req><input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="example@gmail.com" className="field" /></Field>
                     <Field label="WhatsApp number" req><input type="tel" name="phone" required value={formData.phone} onChange={handleChange} placeholder="+91 98765 43210" className="field" /></Field>
                   </div>
 

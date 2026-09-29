@@ -17,10 +17,11 @@ const NAV = [
   { id: 'events', label: 'Events', icon: 'fa-calendar-days' },
   { id: 'register', label: 'Register', icon: 'fa-id-card' },
   { id: 'team', label: 'Team', icon: 'fa-users' },
+  { id: 'collaborators', label: 'Collaborators', icon: 'fa-handshake' },
 ];
 
 export default function App() {
-  const PAGE_IDS = ['home', 'events', 'register', 'team', 'admin'];
+  const PAGE_IDS = ['home', 'events', 'register', 'team', 'admin', 'collaborators'];
   const pageFromHash = () => {
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
     return PAGE_IDS.includes(h) ? h : 'home';
@@ -57,17 +58,42 @@ export default function App() {
   useEffect(() => {
     const sync = () => {
       const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-      setActivePage(PAGE_IDS.includes(h) ? h : 'home');
+      const page = PAGE_IDS.includes(h) ? h : 'home';
+      setActivePage(page);
       setMobileMenuOpen(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (h === 'collaborators') {
+        setTimeout(() => {
+          document.getElementById('collaborators')?.scrollIntoView({ behavior: 'smooth' });
+        }, 120);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     };
     window.addEventListener('hashchange', sync);
+    const initialHash = (window.location.hash || '').replace('#/', '').split('?')[0];
+    if (initialHash === 'collaborators') {
+      setTimeout(() => {
+        document.getElementById('collaborators')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
     return () => window.removeEventListener('hashchange', sync);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePageChange = (page) => {
     setMobileMenuOpen(false);
+    if (page === 'collaborators') {
+      setActivePage('collaborators');
+      if ((window.location.hash || '') === '#/collaborators') {
+        document.getElementById('collaborators')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.location.hash = '#/collaborators';
+      }
+      setTimeout(() => {
+        document.getElementById('collaborators')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return;
+    }
     if ((window.location.hash || '') === `#/${page}`) {
       setActivePage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -285,7 +311,7 @@ export default function App() {
 
       {/* ================= MAIN ================= */}
       <main className="flex-grow pt-20 sm:pt-24 pb-8 px-4 sm:px-8 max-w-7xl mx-auto w-full overflow-x-clip">
-        {activePage === 'home' && <Home navigateTo={handlePageChange} />}
+        {(activePage === 'home' || activePage === 'collaborators') && <Home navigateTo={handlePageChange} />}
         {activePage === 'events' && <Events openRsvpModal={openRsvpModal} navigateTo={handlePageChange} />}
         {activePage === 'register' && <Register onApplicationReceived={openReceiptModal} />}
         {activePage === 'team' && <Team navigateTo={handlePageChange} />}
@@ -307,6 +333,26 @@ export default function App() {
             <p className="text-sm text-cream-100/80 leading-relaxed max-w-sm">
               Sun Entrepreneurship Club — turning raw student ideas into fundable ventures, on campus in Nashik.
             </p>
+            {/* Small Footer Collaboration Reference */}
+            <div className="pt-1 flex items-center gap-2 text-xs">
+              <span className="font-mono text-[10px] tracking-wider uppercase text-gold-300 font-semibold">In Collaboration With</span>
+              <span className="text-white/20">·</span>
+              <span className="inline-flex items-center gap-1.5 font-display font-bold text-cream-50">
+                <span className="inline-block bg-white rounded px-1.5 py-0.5 shadow-sm">
+                  <img
+                    src="/sandip%20tbi%20logo.jpeg"
+                    alt="Sandip TBI"
+                    className="h-3 w-auto object-contain"
+                    onError={(e) => {
+                      if (e.currentTarget.src.includes('%20')) {
+                        e.currentTarget.src = '/sandip tbi logo.jpeg';
+                      }
+                    }}
+                  />
+                </span>
+                Sandip TBI
+              </span>
+            </div>
             <div className="flex gap-2">
               <a
                 href="https://www.instagram.com/sun_entrepreneurship_club?stkn=MTNrb3Zhd295Z2dmNw=="
