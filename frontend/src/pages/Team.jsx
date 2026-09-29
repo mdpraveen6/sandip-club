@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '../components/Card';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '../components/Button';
 import { api, photoUrl } from '../lib/api';
 
@@ -55,35 +54,62 @@ const LOCAL_PHOTOS = {
   'prathamesh patil': prathameshImg,
 };
 
-// Custom focal positioning so faces are naturally framed across portrait & standing photos
-const PHOTO_POSITIONS = {
-  'krish dodani': 'object-[center_12%]',
-  'krish': 'object-[center_12%]',
-  'ankit tiwari': 'object-[center_10%]',
-  'komal sonawane': 'object-[center_12%]',
-  'jahan ara khan': 'object-[center_35%]',
-  'shaik maksud ahmad': 'object-[center_45%]',
-  'tejas adhav patil': 'object-[center_45%]',
-  'm.d. praveen': 'object-[center_45%]',
-  'm.d praveen': 'object-[center_45%]',
-  'siddam vaibhav': 'object-center',
-  'prathmesh patil': 'object-[center_18%]',
-  'prathamesh patil': 'object-[center_18%]',
-};
-
-const socialIcon = (label = '') => {
-  const l = label.toLowerCase();
-  if (l.includes('linkedin')) return 'fa-brands fa-linkedin-in';
-  if (l.includes('github')) return 'fa-brands fa-github';
-  if (l.includes('instagram')) return 'fa-brands fa-instagram';
-  if (l.includes('twitter')) return 'fa-brands fa-x-twitter';
-  if (l.includes('youtube')) return 'fa-brands fa-youtube';
-  return 'fa-solid fa-globe';
+// Carefully tailored framing and positioning per photo to prevent awkward cropping
+const PHOTO_CONFIG = {
+  'ankit tiwari': { objectFit: 'cover', objectPosition: 'center 8%' },
+  'komal sonawane': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'darshana kushwaha': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'jahan ara khan': { objectFit: 'cover', objectPosition: 'center 22%' },
+  'shaik maksud ahmad': { objectFit: 'cover', objectPosition: 'center 46%', transform: 'scale(1.18)' },
+  'tejas adhav patil': { objectFit: 'cover', objectPosition: 'center 46%', transform: 'scale(1.18)' },
+  'm.d. praveen': { objectFit: 'cover', objectPosition: 'center 48%', transform: 'scale(1.2)' },
+  'm.d praveen': { objectFit: 'cover', objectPosition: 'center 48%', transform: 'scale(1.2)' },
+  'siddam vaibhav': { objectFit: 'cover', objectPosition: 'center 28%', transform: 'scale(1.25)' },
+  'mansi nikumbh': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'atul sahane': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'jayesh ranjit patil': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'ashirwad deshmukh': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'prathamesh patil': { objectFit: 'cover', objectPosition: 'center 14%' },
+  'prathmesh patil': { objectFit: 'cover', objectPosition: 'center 14%' },
+  'krish dodani': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'krish': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'rishi kumar mishra': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'saurav jha': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'manish patil': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'aparna sambhari': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'pratima': { objectFit: 'cover', objectPosition: 'center 12%' },
+  'rohan kolla': { objectFit: 'cover', objectPosition: 'center 15%' },
+  'yash dange': { objectFit: 'cover', objectPosition: 'center 15%' },
 };
 
 export const Team = ({ navigateTo }) => {
   const [cat, setCat] = useState('ALL');
+  const [idx, setIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [screenSize, setScreenSize] = useState('desktop');
+  const dragRef = useRef({ startX: 0, isDragging: false });
 
+  // Responsive screen breakpoint
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 640) setScreenSize('mobile');
+      else if (w < 1024) setScreenSize('tablet');
+      else setScreenSize('desktop');
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Team array ordered explicitly:
+  // 1. Club Advisor
+  // 2. Leadership Team (Presidents, Secretaries, Treasurer)
+  // 3. Sponsorship Team (Immediately follows Leadership)
+  // 4. Technical Team (Immediately follows Sponsorship)
+  // 5. Event & Marketing Team
+  // 6. Media & Engagement Team
+  // 7. Media & Production Team (Prathamesh first)
   const fallbackMembers = [
     { name: 'Krish Dodani', role: 'Sun Entrepreneurship Club Advisor', category: 'Advisor', year: '3rd Year', branch: 'N/A', bio: 'Guiding club initiatives, strategic development, and founder mentorship.' },
     { name: 'Rishi Kumar Mishra', role: 'President', category: 'Presidents', year: '3rd Year', branch: 'N/A', bio: 'Owns the vision — partnerships, incubation strategy and the ecosystem roadmap.' },
@@ -91,6 +117,8 @@ export const Team = ({ navigateTo }) => {
     { name: 'Saurav Jha', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'N/A', bio: 'Keeps the institution running — compliance, records, official correspondence.' },
     { name: 'Shaik Maksud Ahmad', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'N/A', bio: 'Connects teams, outreach and day-to-day operational tracking.' },
     { name: 'Jahan Ara Khan', role: 'Treasurer', category: 'Treasurers', year: '3rd Year', branch: 'N/A', bio: 'Guards the money — budgets, event spends and grant tracking.' },
+    { name: 'Tejas Adhav Patil', role: 'Sponsorship Team Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Builds corporate alliances and mentor links.' },
+    { name: 'Yash Dange', role: 'Sponsorship Team Co-Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Manages partners and the prize pool.' },
     { name: 'M.D. Praveen', role: 'Technical Team Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Architects the portals, platforms and digital infrastructure.' },
     { name: 'Ashirwad Deshmukh', role: 'Technical Team Co-Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Co-leads backend integrations and platform reliability.' },
     { name: 'Jayesh Ranjit Patil', role: 'Technical Team Co-Head', category: 'Technical', year: '3rd Year', branch: 'N/A', bio: 'Crafts frontend interfaces and design systems.' },
@@ -108,24 +136,20 @@ export const Team = ({ navigateTo }) => {
     { name: 'Kamsali Yashwanth', role: 'Videographer & Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Directs shoots, montages and visual stories.' },
     { name: 'Rohan Kolla', role: 'Videographer', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Captures the moments that matter on event day.' },
     { name: 'Chityala Manikanteswarareddy', role: 'Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Cuts promos, reels and pitch-night highlights.' },
-    { name: 'Tejas Adhav Patil', role: 'Sponsorship Team Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Builds corporate alliances and mentor links.' },
-    { name: 'Yash Dange', role: 'Sponsorship Team Co-Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Manages partners and the prize pool.' },
   ];
 
-  // Live roster from the admin panel; merges with the built-in list so all members are always present in production.
+  // Live roster from the admin panel; merges with the built-in list preserving order
   const [remoteMembers, setRemoteMembers] = useState(null);
   useEffect(() => {
     api.teamPublic()
       .then((d) => {
         if (d && Array.isArray(d.items) && d.items.length > 0) {
-          // Merge by name: keep fallbackMembers as base, and overlay any remote updates
           const remoteMap = new Map(d.items.map((m) => [(m.name || '').toLowerCase().trim(), m]));
           const merged = fallbackMembers.map((fb) => {
             const key = (fb.name || '').toLowerCase().trim();
             const remote = remoteMap.get(key) || (key === 'prathamesh patil' ? remoteMap.get('prathmesh patil') : null);
             return remote ? { ...fb, ...remote } : fb;
           });
-          // Also append any extra members added through the admin panel not in fallback
           const fbKeys = new Set(fallbackMembers.flatMap((m) => {
             const k = (m.name || '').toLowerCase().trim();
             return k === 'prathamesh patil' ? ['prathamesh patil', 'prathmesh patil'] : [k];
@@ -145,13 +169,7 @@ export const Team = ({ navigateTo }) => {
     const r = (m.role || '').toLowerCase();
     const c = (m.category || '').toLowerCase();
     return r.includes('president') || r.includes('secretary') || r.includes('treasurer') ||
-           c === 'presidents' || c === 'secretaries' || c === 'treasurers' || c === 'governing body';
-  };
-
-  const isFaculty = (m) => {
-    const r = (m.role || '').toLowerCase();
-    const c = (m.category || '').toLowerCase();
-    return r.includes('faculty') || c.includes('faculty');
+           c === 'presidents' || c === 'secretaries' || c === 'treasurers' || c.includes('governing') || c.includes('leadership');
   };
 
   const isAdvisor = (m) => {
@@ -160,52 +178,140 @@ export const Team = ({ navigateTo }) => {
     return r.includes('advisor') || c.includes('advisor');
   };
 
-  // Groupings for team structure
-  const governingMembers = teamMembers.filter(isGoverning);
-  const facultyMembers = teamMembers.filter(isFaculty);
-  const advisorMembers = teamMembers.filter(isAdvisor);
-
   const opTeamsDef = [
     {
       id: 'Sponsorship',
-      name: 'Sponsorship Team',
-      desc: 'Building corporate alliances, industry sponsorships, and partner relations.',
+      name: 'Sponsorship',
       filter: (m) => (m.category || '').toLowerCase() === 'sponsorship' || (m.role || '').toLowerCase().includes('sponsorship'),
     },
     {
       id: 'Technical',
-      name: 'Technical Team',
-      desc: 'Architecting web platforms, student portals, and digital infrastructure.',
+      name: 'Technical',
       filter: (m) => (m.category || '').toLowerCase() === 'technical' || (m.role || '').toLowerCase().includes('technical'),
     },
     {
       id: 'Event & Marketing',
-      name: 'Event & Marketing Team',
-      desc: 'Designing pitch competitions, campus venue executions, and outreach campaigns.',
+      name: 'Event & Marketing',
       filter: (m) => (m.category || '').toLowerCase() === 'event & marketing' || (m.role || '').toLowerCase().includes('event') || (m.role || '').toLowerCase().includes('marketing'),
     },
     {
       id: 'Media & Engagement',
-      name: 'Media & Engagement Team',
-      desc: 'Directing social media channels, digital branding, and student onboarding.',
+      name: 'Media & Engagement',
       filter: (m) => (m.category || '').toLowerCase() === 'media & engagement' || (m.role || '').toLowerCase().includes('social media') || (m.role || '').toLowerCase().includes('engagement'),
     },
     {
       id: 'Media & Production',
-      name: 'Media & Production Team',
-      desc: 'Capturing event moments, cinematography, and post-production video editing.',
-      filter: (m) => (m.category || '').toLowerCase() === 'media & production' || (m.role || '').toLowerCase().includes('video'),
+      name: 'Media & Production',
+      filter: (m) => (m.category || '').toLowerCase() === 'media & production' || (m.role || '').toLowerCase().includes('video') || (m.role || '').toLowerCase().includes('photograph'),
     },
   ];
 
   const categories = [
     'ALL',
     'Club Advisor',
-    'Governing Body',
+    'Leadership Team',
     ...opTeamsDef.map((t) => t.id),
   ];
 
-  const initials = (n) => n.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+  const getMemberSection = (m) => {
+    if (isAdvisor(m)) return 'Club Advisor';
+    if (isGoverning(m)) return 'Leadership Team';
+    const c = (m.category || '').toLowerCase();
+    const r = (m.role || '').toLowerCase();
+    if (c === 'sponsorship' || r.includes('sponsorship')) return 'Sponsorship';
+    if (c === 'technical' || r.includes('technical')) return 'Technical';
+    if (c === 'event & marketing' || r.includes('event') || r.includes('marketing')) return 'Event & Marketing';
+    if (c === 'media & engagement' || r.includes('social media') || r.includes('engagement')) return 'Media & Engagement';
+    if (c === 'media & production' || r.includes('video') || r.includes('photograph')) return 'Media & Production';
+    return m.category || 'Team Member';
+  };
+
+  const getFilteredMembers = () => {
+    if (cat === 'ALL') return teamMembers;
+    if (cat === 'Club Advisor') return teamMembers.filter(isAdvisor);
+    if (cat === 'Leadership Team' || cat === 'Governing Body') return teamMembers.filter(isGoverning);
+    const op = opTeamsDef.find((t) => t.id === cat);
+    if (op) return teamMembers.filter(op.filter);
+    return teamMembers.filter((m) => (m.category || '').toLowerCase() === cat.toLowerCase());
+  };
+
+  const list = getFilteredMembers();
+
+  // Reset to first member when category changes
+  const handleCategorySelect = (selectedCat) => {
+    setCat(selectedCat);
+    setIdx(0);
+    setProgress(0);
+  };
+
+  // Safe navigation delta
+  const go = (delta) => {
+    if (list.length <= 1) return;
+    setIdx((prev) => (prev + delta + list.length) % list.length);
+  };
+
+  // Autoplay timer with progress ring updates
+  const AUTOPLAY_MS = 3800;
+  useEffect(() => {
+    if (list.length <= 1) {
+      setProgress(100);
+      return;
+    }
+    let p = 0;
+    setProgress(0);
+    const tickInterval = 60;
+    const step = 100 / (AUTOPLAY_MS / tickInterval);
+
+    const tickTimer = setInterval(() => {
+      p = Math.min(100, p + step);
+      setProgress(p);
+    }, tickInterval);
+
+    const slideTimer = setInterval(() => {
+      setIdx((prev) => (prev + 1) % list.length);
+      p = 0;
+      setProgress(0);
+    }, AUTOPLAY_MS);
+
+    return () => {
+      clearInterval(tickTimer);
+      clearInterval(slideTimer);
+    };
+  }, [idx, list.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') go(1);
+      if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [list.length]);
+
+  // Pointer drag/swipe handling
+  const handlePointerDown = (e) => {
+    dragRef.current = { startX: e.clientX, isDragging: true };
+  };
+  const handlePointerUp = (e) => {
+    if (!dragRef.current.isDragging) return;
+    dragRef.current.isDragging = false;
+    const dx = e.clientX - dragRef.current.startX;
+    if (dx > 45) {
+      go(-1);
+    } else if (dx < -45) {
+      go(1);
+    }
+  };
+
+  const initials = (n = '') =>
+    n
+      .split(' ')
+      .filter(Boolean)
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
 
   const getMemberPhoto = (m) => {
     const norm = (m.name || '').toLowerCase().trim();
@@ -214,210 +320,296 @@ export const Team = ({ navigateTo }) => {
     return null;
   };
 
-  const getPhotoPosition = (m) => {
+  const getPhotoStyle = (m) => {
     const norm = (m.name || '').toLowerCase().trim();
-    return PHOTO_POSITIONS[norm] || 'object-top';
+    return PHOTO_CONFIG[norm] || { objectFit: 'cover', objectPosition: 'center 15%' };
   };
 
-  const renderMemberCard = (m) => {
-    const photo = getMemberPhoto(m);
-    const posClass = getPhotoPosition(m);
-
-    return (
-      <motion.div
-        key={m.name}
-        layout
-        initial={{ opacity: 0, y: 22, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        transition={{ duration: 0.32 }}
-      >
-        <Card hover hairline className="h-full flex flex-col">
-          {/* Photo Showcase without redundant inner border box */}
-          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 group/img shrink-0">
-            {photo ? (
-              <img
-                src={photo}
-                alt={m.name}
-                className={`w-full h-full object-cover ${posClass} transition-transform duration-500 group-hover:scale-105`}
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 via-gold-500/10 to-transparent">
-                <span className="w-16 h-16 rounded-2xl bg-gradient-brand text-white font-display font-extrabold text-2xl flex items-center justify-center border-glow shadow-card">
-                  {initials(m.name)}
-                </span>
-                <span className="font-mono text-[10px] tracking-[0.2em] text-gold-500 uppercase mt-2.5 opacity-80">
-                  Team Member
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Member Details */}
-          <div className="flex-grow flex flex-col">
-            <h3 className="font-display font-bold text-lg sm:text-xl leading-tight text-emerald-950 dark:text-white truncate" title={m.name}>
-              {m.name}
-            </h3>
-            <div className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-gold-600 dark:text-gold-300 mt-1">
-              {m.role}
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-auto pt-3.5 border-t border-black/10 dark:border-white/10 font-mono text-[10px] font-bold">
-              {m.year && m.year !== 'N/A' && (
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                  {m.year}
-                </span>
-              )}
-              {!isGoverning(m) && m.branch && m.branch !== 'N/A' && (
-                <span className="px-2.5 py-1 rounded-full border border-black/10 dark:border-white/15 opacity-70 max-w-full truncate" title={m.branch}>
-                  {m.branch}
-                </span>
-              )}
-            </div>
-
-            {(m.tags || []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {m.tags.map((t) => (
-                  <span key={t} className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {(m.socials || []).length > 0 && (
-              <div className="flex gap-4 mt-3 text-sm opacity-70">
-                {m.socials.map((s, i) => (
-                  <a key={i} href={s.url} target="_blank" rel="noreferrer" title={s.label} className="hover:text-gold-500 hover:opacity-100 transition">
-                    <i className={socialIcon(s.label)} />
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
-      </motion.div>
-    );
-  };
+  const currentMember = list[idx] || list[0] || null;
+  const currentPhoto = currentMember ? getMemberPhoto(currentMember) : null;
 
   return (
     <div className="relative">
+      {/* Background ambient pattern */}
       <div className="pointer-events-none absolute -top-20 sm:-top-24 -left-4 sm:-left-8 -right-4 sm:-right-8 bottom-0 -z-10 overflow-hidden">
         <div className="floating-orb w-[460px] h-[460px] bg-gold-500/12 -top-24 -left-24" />
         <div className="absolute inset-0 grid-pattern" />
       </div>
 
-      <motion.section initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="pt-8 sm:pt-12 text-center max-w-3xl mx-auto space-y-5">
-        <span className="section-badge"><i className="fa-solid fa-users text-gold-500" /> The crew</span>
+      {/* Header section */}
+      <motion.section
+        initial={{ opacity: 0, y: 26 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="pt-8 sm:pt-12 text-center max-w-3xl mx-auto space-y-5"
+      >
+        <span className="section-badge">
+          <i className="fa-solid fa-users text-gold-500" /> The crew
+        </span>
         <h1 className="section-title font-display text-4xl sm:text-6xl font-extrabold text-balance">
           Students running a <span className="text-gradient-gold">startup engine.</span>
         </h1>
-        <p className="section-subtitle text-sm sm:text-base">Presidents to video editors — {teamMembers.length} builders across organized teams keeping the Launchpad flying.</p>
+        <p className="section-subtitle text-sm sm:text-base">
+          Presidents to video editors — {teamMembers.length} builders across organized teams keeping the Launchpad flying.
+        </p>
 
+        {/* Category Pills */}
         <div className="flex flex-wrap justify-center gap-2 pt-1">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={`px-4 py-2 rounded-full font-mono text-[11px] font-bold uppercase tracking-wider border transition ${
-                cat === c
-                  ? 'bg-gradient-gold text-[#1A1405] border-transparent border-glow-gold'
-                  : 'text-slate-500 dark:text-cream-100/75 opacity-80 hover:opacity-100 hover:text-emerald-950 dark:hover:text-white border-black/15 dark:border-white/15 lux-pill'
-              }`}
-            >
-              {c === 'ALL' ? `All · ${teamMembers.length}` : c}
-            </button>
-          ))}
+          {categories.map((c) => {
+            const count =
+              c === 'ALL'
+                ? teamMembers.length
+                : c === 'Club Advisor'
+                ? teamMembers.filter(isAdvisor).length
+                : c === 'Leadership Team' || c === 'Governing Body'
+                ? teamMembers.filter(isGoverning).length
+                : opTeamsDef.find((t) => t.id === c)
+                ? teamMembers.filter(opTeamsDef.find((t) => t.id === c).filter).length
+                : teamMembers.filter((m) => (m.category || '').toLowerCase() === c.toLowerCase()).length;
+
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => handleCategorySelect(c)}
+                className={`px-4 py-2 rounded-full font-mono text-[11px] font-bold uppercase tracking-wider border transition cursor-pointer ${
+                  cat === c
+                    ? 'bg-gradient-gold text-[#1A1405] border-transparent shadow-[0_0_18px_rgba(255,200,61,0.4)]'
+                    : 'text-slate-400 dark:text-cream-100/75 opacity-80 hover:opacity-100 hover:text-emerald-950 dark:hover:text-white border-black/15 dark:border-white/15 lux-pill hover:border-gold-400/50'
+                }`}
+              >
+                {c === 'ALL' ? `All · ${count}` : `${c.toUpperCase()} · ${count}`}
+              </button>
+            );
+          })}
         </div>
       </motion.section>
 
-      {/* TEAM SECTIONS */}
-      <div className="mt-12 space-y-16">
-        {/* Sun Entrepreneurship Club Advisor */}
-        {(cat === 'ALL' || cat === 'Club Advisor' || cat.toLowerCase().includes('advisor')) && advisorMembers.length > 0 && (
-          <section className="space-y-6">
-            <div className="border-b border-black/10 dark:border-white/10 pb-4">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gold-500">Club Advisory</span>
-              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
-                Sun Entrepreneurship Club Advisor
-              </h2>
-              <p className="text-xs sm:text-sm section-subtitle mt-1">
-                Providing strategic guidance, leadership mentorship, and steering the club&apos;s entrepreneurial mission.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {advisorMembers.map(renderMemberCard)}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
+      {/* 3D PERSPECTIVE TEAM SLIDER STAGE - SIGNIFICANTLY ENLARGED */}
+      <div className="mt-10 sm:mt-12 px-2 sm:px-4">
+        <div className="relative max-w-[1320px] mx-auto rounded-[24px] sm:rounded-[36px] overflow-hidden h-[580px] sm:h-[680px] md:h-[740px] lg:h-[780px] border border-gold-500/30 bg-[#04140f] shadow-[0_30px_90px_rgba(0,0,0,0.75)] select-none">
+          {/* Blurred Background Atmosphere */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {currentPhoto ? (
+              <div
+                key={currentPhoto}
+                className="absolute -inset-[6%] bg-cover bg-center filter blur-[45px] saturate-[1.25] brightness-[0.42] scale-110 transition-all duration-700 ease-out"
+                style={{ backgroundImage: `url(${currentPhoto})` }}
+              />
+            ) : (
+              <div className="absolute -inset-[6%] bg-gradient-to-br from-emerald-900/25 via-transparent to-gold-500/15 filter blur-3xl" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#03110e]/60 via-[#03110e]/75 to-[#03110e]/95" />
+            <div
+              className="absolute inset-0 opacity-[0.14] pointer-events-none"
+              style={{
+                backgroundImage: `linear-gradient(#14b8a6 1px, transparent 1px), linear-gradient(90deg, #14b8a6 1px, transparent 1px)`,
+                backgroundSize: '48px 48px',
+              }}
+            />
+          </div>
 
-        {/* Governing Leadership Body */}
-        {(cat === 'ALL' || cat === 'Governing Body') && governingMembers.length > 0 && (
-          <section className="space-y-6">
-            <div className="border-b border-black/10 dark:border-white/10 pb-4">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gold-500">Core Governance</span>
-              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
-                Governing Leadership Body
-              </h2>
-              <p className="text-xs sm:text-sm section-subtitle mt-1">
-                Directing strategic vision, administration, compliance, and institutional allocations.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {governingMembers.map(renderMemberCard)}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
+          {/* 3D Perspective Track */}
+          <div
+            className="absolute inset-0 flex items-center justify-center cursor-grab active:cursor-grabbing"
+            style={{ perspective: '1400px' }}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+          >
+            {list.map((m, i) => {
+              let d = i - idx;
+              const total = list.length;
+              if (total > 1) {
+                while (d > total / 2) d -= total;
+                while (d < -total / 2) d += total;
+              }
+              const abs = Math.abs(d);
+              const isActive = d === 0;
 
-        {/* Faculty Coordinator (rendered dynamically if existing in data) */}
-        {(cat === 'ALL' || cat.toLowerCase().includes('faculty')) && facultyMembers.length > 0 && (
-          <section className="space-y-6">
-            <div className="border-b border-black/10 dark:border-white/10 pb-4">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">University Mentorship</span>
-              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
-                Faculty Coordinator
-              </h2>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {facultyMembers.map(renderMemberCard)}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
+              // Generous responsive spacing and scale calculations for BIG card box
+              const isMobile = screenSize === 'mobile';
+              const spread = isMobile ? 180 : screenSize === 'tablet' ? 260 : 330;
+              const zDist = -abs * (isMobile ? 120 : 160);
+              const scale = isActive ? 1 : abs === 1 ? 0.8 : 0.58;
+              const rot = d * 26;
 
-        {/* Operational Teams */}
-        {opTeamsDef.map((team) => {
-          if (cat !== 'ALL' && cat !== team.id) return null;
-          const members = teamMembers.filter(team.filter);
-          if (members.length === 0) return null;
+              if (abs > 2) {
+                return (
+                  <div
+                    key={`${m.name}-${i}`}
+                    className="absolute w-[min(320px,78vw)] sm:w-[360px] md:w-[400px] lg:w-[440px] aspect-[3/4] opacity-0 pointer-events-none"
+                    style={{
+                      transform: `translateX(${d * spread}px) scale(0.4)`,
+                      transition: 'transform 0.65s cubic-bezier(0.22, 0.9, 0.3, 1), opacity 0.65s ease, filter 0.65s ease',
+                    }}
+                  />
+                );
+              }
 
-          return (
-            <section key={team.id} className="space-y-6">
-              <div className="border-b border-black/10 dark:border-white/10 pb-4">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gold-500">Operational Team</span>
-                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
-                  {team.name}
-                </h2>
-                <p className="text-xs sm:text-sm section-subtitle mt-1">
-                  {team.desc}
-                </p>
+              const transform = `translateX(${d * spread}px) translateZ(${zDist}px) rotateY(${-rot}deg) scale(${scale})`;
+              const zIndex = 10 - abs;
+              const opacity = isActive ? 1 : abs === 1 ? 0.65 : 0.28;
+              const filter = isActive ? 'none' : 'brightness(0.6) saturate(0.7)';
+              const photo = getMemberPhoto(m);
+              const photoStyle = getPhotoStyle(m);
+              const memberSection = getMemberSection(m);
+
+              return (
+                <div
+                  key={`${m.name}-${i}`}
+                  onClick={() => {
+                    if (!isActive) {
+                      setIdx(i);
+                    }
+                  }}
+                  className={`absolute w-[min(320px,78vw)] sm:w-[360px] md:w-[400px] lg:w-[440px] aspect-[3/4] rounded-[22px] sm:rounded-[28px] overflow-hidden cursor-pointer select-none ${
+                    isActive
+                      ? 'shadow-[0_32px_80px_rgba(0,0,0,0.75),0_0_0_2px_#ffc83d,0_0_45px_rgba(255,200,61,0.45)] border border-gold-400'
+                      : 'shadow-[0_22px_55px_rgba(0,0,0,0.55)] border border-white/10'
+                  }`}
+                  style={{
+                    transform,
+                    zIndex,
+                    opacity,
+                    filter,
+                    transition: 'transform 0.65s cubic-bezier(0.22, 0.9, 0.3, 1), opacity 0.65s ease, filter 0.65s ease, box-shadow 0.4s ease, border-color 0.4s ease',
+                  }}
+                >
+                  {/* Subtle ambient backdrop behind portrait */}
+                  {photo && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                      <img
+                        src={photo}
+                        alt=""
+                        aria-hidden="true"
+                        className="w-full h-full object-cover blur-md scale-125 opacity-35"
+                      />
+                      <div className="absolute inset-0 bg-[#04140f]/60" />
+                    </div>
+                  )}
+
+                  {/* Member Photo or Branded Initials Avatar */}
+                  {photo ? (
+                    <img
+                      src={photo}
+                      alt={m.name}
+                      style={photoStyle}
+                      className="relative z-10 w-full h-full select-none pointer-events-none transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 via-ink-950 to-emerald-950/60 select-none">
+                      <span className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-brand text-white font-display font-extrabold text-3xl sm:text-4xl flex items-center justify-center border-glow shadow-card">
+                        {initials(m.name)}
+                      </span>
+                      <span className="font-mono text-xs sm:text-sm tracking-[0.2em] text-gold-400 uppercase mt-4 opacity-90">
+                        {memberSection}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Bottom Vignette Shade */}
+                  <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
+
+                  {/* Active Card Gliding Caption - Bigger & Clearer */}
+                  <div
+                    className={`absolute left-0 right-0 bottom-0 z-30 p-5 sm:p-7 pointer-events-none transition-all duration-400 ease-out ${
+                      isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                    }`}
+                  >
+                    <span className="block font-mono text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-gold-400 mb-1">
+                      {memberSection}
+                    </span>
+                    <div className="font-display text-white text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight truncate">
+                      {m.name}
+                    </div>
+                    <div className="font-mono text-gold-300 text-sm sm:text-base tracking-wide font-semibold mt-1 truncate">
+                      {m.role}
+                    </div>
+                    {m.year && m.year !== 'N/A' && (
+                      <span className="inline-block mt-3 font-mono text-xs sm:text-sm font-bold tracking-wider text-emerald-400 border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-1 rounded-full">
+                        {m.year}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Navigation Controls: Previous / Next Arrows */}
+          <button
+            type="button"
+            aria-label="Previous Team Member"
+            onClick={() => go(-1)}
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#04140f]/75 border border-gold-500/35 text-gold-300 hover:text-white hover:border-gold-400 hover:bg-gold-500/20 flex items-center justify-center z-30 backdrop-blur-md transition-all duration-200 shadow-xl cursor-pointer"
+          >
+            <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label="Next Team Member"
+            onClick={() => go(1)}
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#04140f]/75 border border-gold-500/35 text-gold-300 hover:text-white hover:border-gold-400 hover:bg-gold-500/20 flex items-center justify-center z-30 backdrop-blur-md transition-all duration-200 shadow-xl cursor-pointer"
+          >
+            <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+
+          {/* Infobar at Bottom */}
+          <div className="absolute left-4 sm:left-8 right-4 sm:right-8 bottom-5 sm:bottom-6 flex items-center gap-3 sm:gap-5 z-30 pointer-events-auto">
+            {/* Progress Ring with Member Index */}
+            <div
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex-none flex items-center justify-center transition-all shadow-md"
+              style={{
+                background: `conic-gradient(#ffc83d ${progress}%, rgba(255,255,255,0.15) 0)`,
+              }}
+            >
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#04140f] flex items-center justify-center font-mono text-[10px] sm:text-xs text-gold-400 font-bold">
+                {idx + 1}
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {members.map(renderMemberCard)}
-                </AnimatePresence>
+            </div>
+
+            {/* Active Member Info Text */}
+            <div className="leading-tight min-w-0 flex-1">
+              <b className="font-display font-bold text-sm sm:text-base md:text-lg text-white block truncate">
+                {currentMember ? currentMember.name : '—'}
+              </b>
+              <span className="font-mono text-xs sm:text-sm text-emerald-300/80 tracking-wide block truncate mt-0.5">
+                {currentMember
+                  ? `${currentMember.role}${currentMember.year && currentMember.year !== 'N/A' ? ' · ' + currentMember.year : ''}`
+                  : '—'}
+              </span>
+            </div>
+
+            {/* Numeric Indicator and Navigation Dots */}
+            <div className="flex items-center gap-2.5 ml-auto flex-shrink-0">
+              <span className="font-mono text-xs sm:text-sm text-gold-400 font-bold">
+                {idx + 1} <span className="opacity-40">/</span> {list.length}
+              </span>
+              <div className="hidden sm:flex items-center gap-1.5 max-w-[180px] md:max-w-[260px] overflow-hidden">
+                {list.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={`Go to member ${i + 1}`}
+                    onClick={() => setIdx(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      i === idx ? 'w-5 bg-gold-400' : 'w-1.5 bg-white/25 hover:bg-white/50'
+                    }`}
+                  />
+                ))}
               </div>
-            </section>
-          );
-        })}
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Call to Action Banner */}
       <section className="mt-14 mb-6">
         <div className="rounded-[24px] spotlight text-white p-8 sm:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 noise relative overflow-hidden">
           <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-emerald-500/20 blur-3xl" />
@@ -426,7 +618,9 @@ export const Team = ({ navigateTo }) => {
             <h3 className="font-display text-2xl font-bold mt-2">Want your name on this wall next?</h3>
             <p className="text-sm text-cream-100/60 mt-1">Join as a volunteer this semester, grow into a team lead.</p>
           </div>
-          <Button variant="gold" onClick={() => navigateTo && navigateTo('register')} className="relative shrink-0">Apply as founder <i className="fa-solid fa-arrow-right text-xs" /></Button>
+          <Button variant="gold" onClick={() => navigateTo && navigateTo('register')} className="relative shrink-0">
+            Apply as founder <i className="fa-solid fa-arrow-right text-xs" />
+          </Button>
         </div>
       </section>
     </div>

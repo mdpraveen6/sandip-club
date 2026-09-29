@@ -13,6 +13,8 @@ const TEAM = [
   ['Saurav Jha', 'Secretary', 'Secretaries', '3rd Year', 'N/A', 'Directing institutional compliance, official correspondence, and administrative records.'],
   ['Shaik Maksud Ahmad', 'Secretary', 'Secretaries', '3rd Year', 'N/A', 'Coordinating inter-team communication, student outreach, and operational tracking.'],
   ['Jahan Ara Khan', 'Treasurer', 'Treasurers', '3rd Year', 'N/A', 'Managing financial allocation, event budgeting, and incubation grant tracking.'],
+  ['Tejas Adhav Patil', 'Sponsorship Team Head', 'Sponsorship', '3rd Year', 'N/A', 'Building corporate alliances, industry sponsorships, and VC mentor links.'],
+  ['Yash Dange', 'Sponsorship Team Co-Head', 'Sponsorship', '3rd Year', 'N/A', 'Managing partner relations and pitch competition prize pool packages.'],
   ['M.D. Praveen', 'Technical Team Head', 'Technical', '3rd Year', 'N/A', 'Architecting web platforms, student portals, and digital acceleration infrastructure.'],
   ['Ashirwad Deshmukh', 'Technical Team Co-Head', 'Technical', '3rd Year', 'N/A', 'Co-leading technical platform updates, backend integrations, and platform maintenance.'],
   ['Jayesh Ranjit Patil', 'Technical Team Co-Head', 'Technical', '3rd Year', 'N/A', 'Building frontend user interfaces, responsive design components, and web workflows.'],
@@ -30,8 +32,6 @@ const TEAM = [
   ['Kamsali Yashwanth', 'Videographer & Video Editor', 'Media & Production', 'N/A', 'N/A', 'Handling event shoot direction, video montages, and visual storytelling.'],
   ['Rohan Kolla', 'Videographer', 'Media & Production', 'N/A', 'N/A', 'Operating visual recording gear and capturing key event moments across campus.'],
   ['Chityala Manikanteswarareddy', 'Video Editor', 'Media & Production', 'N/A', 'N/A', 'Executing video assembly, audio synthesis, and visual promotional edits.'],
-  ['Tejas Adhav Patil', 'Sponsorship Team Head', 'Sponsorship', '3rd Year', 'N/A', 'Building corporate alliances, industry sponsorships, and VC mentor links.'],
-  ['Yash Dange', 'Sponsorship Team Co-Head', 'Sponsorship', '3rd Year', 'N/A', 'Managing partner relations and pitch competition prize pool packages.'],
 ];
 
 const EVENTS = [
