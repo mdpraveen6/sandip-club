@@ -25,9 +25,12 @@ import rohanImg from '../images/team/Rohan kolla.jpg';
 import tejasImg from '../images/team/Tejas Adhav Patil.jpg';
 import yashImg from '../images/team/Yash dange.jpg';
 import prathameshImg from '../images/team/Prathamesh patil.jpg';
+import krishImg from '../images/team/Krish.jpg';
 
 // Confident name-to-image mapping
 const LOCAL_PHOTOS = {
+  'krish dodani': krishImg,
+  'krish': krishImg,
   'rishi kumar mishra': rishiImg,
   'atul sahane': atulImg,
   'saurav jha': sauravImg,
@@ -54,6 +57,8 @@ const LOCAL_PHOTOS = {
 
 // Custom focal positioning so faces are naturally framed across portrait & standing photos
 const PHOTO_POSITIONS = {
+  'krish dodani': 'object-[center_12%]',
+  'krish': 'object-[center_12%]',
   'ankit tiwari': 'object-[center_10%]',
   'komal sonawane': 'object-[center_12%]',
   'jahan ara khan': 'object-[center_35%]',
@@ -80,6 +85,7 @@ export const Team = ({ navigateTo }) => {
   const [cat, setCat] = useState('ALL');
 
   const fallbackMembers = [
+    { name: 'Krish Dodani', role: 'Sun Entrepreneurship Club Advisor', category: 'Advisor', year: '3rd Year', branch: 'N/A', bio: 'Guiding club initiatives, strategic development, and founder mentorship.' },
     { name: 'Rishi Kumar Mishra', role: 'President', category: 'Presidents', year: '3rd Year', branch: 'N/A', bio: 'Owns the vision — partnerships, incubation strategy and the ecosystem roadmap.' },
     { name: 'Atul Sahane', role: 'Vice President', category: 'Presidents', year: '3rd Year', branch: 'N/A', bio: 'Runs cross-team operations, pitch programs and founder support.' },
     { name: 'Saurav Jha', role: 'Secretary', category: 'Secretaries', year: '3rd Year', branch: 'N/A', bio: 'Keeps the institution running — compliance, records, official correspondence.' },
@@ -96,31 +102,34 @@ export const Team = ({ navigateTo }) => {
     { name: 'Mansi Nikumbh', role: 'Social Media Team Co-Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Creates the visuals and content the campus shares.' },
     { name: 'Pratima', role: 'Student Engagement Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Guides first-timers from signup to stage-ready.' },
     { name: 'Komal Sonawane', role: 'Student Engagement Co-Head', category: 'Media & Engagement', year: '3rd Year', branch: 'N/A', bio: 'Answers queries and runs the support desks.' },
+    { name: 'Prathamesh Patil', role: 'Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Designs teasers and recap edits.' },
     { name: 'Mahesh Gaikwad', role: 'Videographer & Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Shoots and edits event coverage and highlights.' },
     { name: 'Siddam Vaibhav', role: 'Videographer & Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Handles cinematography and post-production.' },
     { name: 'Kamsali Yashwanth', role: 'Videographer & Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Directs shoots, montages and visual stories.' },
     { name: 'Rohan Kolla', role: 'Videographer', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Captures the moments that matter on event day.' },
     { name: 'Chityala Manikanteswarareddy', role: 'Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Cuts promos, reels and pitch-night highlights.' },
-    { name: 'Prathmesh Patil', role: 'Video Editor', category: 'Media & Production', year: 'N/A', branch: 'N/A', bio: 'Designs teasers and recap edits.' },
     { name: 'Tejas Adhav Patil', role: 'Sponsorship Team Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Builds corporate alliances and mentor links.' },
     { name: 'Yash Dange', role: 'Sponsorship Team Co-Head', category: 'Sponsorship', year: '3rd Year', branch: 'N/A', bio: 'Manages partners and the prize pool.' },
   ];
 
-  // Live roster from the admin panel; merges with the built-in list so all 24 members are always present in production.
+  // Live roster from the admin panel; merges with the built-in list so all members are always present in production.
   const [remoteMembers, setRemoteMembers] = useState(null);
   useEffect(() => {
     api.teamPublic()
       .then((d) => {
         if (d && Array.isArray(d.items) && d.items.length > 0) {
-          // Merge by name: keep all 24 fallbackMembers as the base, and overlay any remote updates (e.g. photos or details from admin)
+          // Merge by name: keep fallbackMembers as base, and overlay any remote updates
           const remoteMap = new Map(d.items.map((m) => [(m.name || '').toLowerCase().trim(), m]));
           const merged = fallbackMembers.map((fb) => {
             const key = (fb.name || '').toLowerCase().trim();
-            const remote = remoteMap.get(key);
+            const remote = remoteMap.get(key) || (key === 'prathamesh patil' ? remoteMap.get('prathmesh patil') : null);
             return remote ? { ...fb, ...remote } : fb;
           });
           // Also append any extra members added through the admin panel not in fallback
-          const fbKeys = new Set(fallbackMembers.map((m) => (m.name || '').toLowerCase().trim()));
+          const fbKeys = new Set(fallbackMembers.flatMap((m) => {
+            const k = (m.name || '').toLowerCase().trim();
+            return k === 'prathamesh patil' ? ['prathamesh patil', 'prathmesh patil'] : [k];
+          }));
           d.items.forEach((m) => {
             const key = (m.name || '').toLowerCase().trim();
             if (!fbKeys.has(key)) merged.push(m);
@@ -191,6 +200,7 @@ export const Team = ({ navigateTo }) => {
 
   const categories = [
     'ALL',
+    'Club Advisor',
     'Governing Body',
     ...opTeamsDef.map((t) => t.id),
   ];
@@ -324,6 +334,26 @@ export const Team = ({ navigateTo }) => {
 
       {/* TEAM SECTIONS */}
       <div className="mt-12 space-y-16">
+        {/* Sun Entrepreneurship Club Advisor */}
+        {(cat === 'ALL' || cat === 'Club Advisor' || cat.toLowerCase().includes('advisor')) && advisorMembers.length > 0 && (
+          <section className="space-y-6">
+            <div className="border-b border-black/10 dark:border-white/10 pb-4">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gold-500">Club Advisory</span>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
+                Sun Entrepreneurship Club Advisor
+              </h2>
+              <p className="text-xs sm:text-sm section-subtitle mt-1">
+                Providing strategic guidance, leadership mentorship, and steering the club&apos;s entrepreneurial mission.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence mode="popLayout">
+                {advisorMembers.map(renderMemberCard)}
+              </AnimatePresence>
+            </div>
+          </section>
+        )}
+
         {/* Governing Leadership Body */}
         {(cat === 'ALL' || cat === 'Governing Body') && governingMembers.length > 0 && (
           <section className="space-y-6">
@@ -356,23 +386,6 @@ export const Team = ({ navigateTo }) => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
                 {facultyMembers.map(renderMemberCard)}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
-
-        {/* Club Advisor (rendered dynamically if existing in data) */}
-        {(cat === 'ALL' || cat.toLowerCase().includes('advisor')) && advisorMembers.length > 0 && (
-          <section className="space-y-6">
-            <div className="border-b border-black/10 dark:border-white/10 pb-4">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">Advisory Board</span>
-              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-white mt-1">
-                Club Advisor
-              </h2>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {advisorMembers.map(renderMemberCard)}
               </AnimatePresence>
             </div>
           </section>

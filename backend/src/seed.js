@@ -7,6 +7,7 @@ const TeamMember = require('./models/TeamMember');
 const Event = require('./models/Event');
 
 const TEAM = [
+  ['Krish Dodani', 'Sun Entrepreneurship Club Advisor', 'Advisor', '3rd Year', 'N/A', 'Guiding club initiatives, strategic development, and founder mentorship.'],
   ['Rishi Kumar Mishra', 'President', 'Presidents', '3rd Year', 'N/A', 'Overseeing strategic vision, incubation partnerships, and ecosystem development for SEBC.'],
   ['Atul Sahane', 'Vice President', 'Presidents', '3rd Year', 'N/A', 'Managing cross-departmental operations, pitch programs, and founder support workflows.'],
   ['Saurav Jha', 'Secretary', 'Secretaries', '3rd Year', 'N/A', 'Directing institutional compliance, official correspondence, and administrative records.'],
@@ -23,12 +24,12 @@ const TEAM = [
   ['Mansi Nikumbh', 'Social Media Team Co-Head', 'Media & Engagement', '3rd Year', 'N/A', 'Creating visual content, campaign posts, and community media updates.'],
   ['Pratima', 'Student Engagement Head', 'Media & Engagement', '3rd Year', 'N/A', 'Guiding students through idea submission, onboarding, and pitch readiness.'],
   ['Komal Sonawane', 'Student Engagement Co-Head', 'Media & Engagement', '3rd Year', 'N/A', 'Answering student queries, managing support desks, and community chats.'],
+  ['Prathamesh Patil', 'Video Editor', 'Media & Production', 'N/A', 'N/A', 'Designing promotional reels, teaser edits, and pitch night highlights.'],
   ['Mahesh Gaikwad', 'Videographer & Video Editor', 'Media & Production', 'N/A', 'N/A', 'Capturing event coverage and producing high-quality video content and edits.'],
   ['Siddam Vaibhav', 'Videographer & Video Editor', 'Media & Production', 'N/A', 'N/A', 'Managing on-field media coverage, cinematography, and post-production video editing.'],
   ['Kamsali Yashwanth', 'Videographer & Video Editor', 'Media & Production', 'N/A', 'N/A', 'Handling event shoot direction, video montages, and visual storytelling.'],
   ['Rohan Kolla', 'Videographer', 'Media & Production', 'N/A', 'N/A', 'Operating visual recording gear and capturing key event moments across campus.'],
   ['Chityala Manikanteswarareddy', 'Video Editor', 'Media & Production', 'N/A', 'N/A', 'Executing video assembly, audio synthesis, and visual promotional edits.'],
-  ['Prathmesh Patil', 'Video Editor', 'Media & Production', 'N/A', 'N/A', 'Designing promotional reels, teaser edits, and pitch night highlights.'],
   ['Tejas Adhav Patil', 'Sponsorship Team Head', 'Sponsorship', '3rd Year', 'N/A', 'Building corporate alliances, industry sponsorships, and VC mentor links.'],
   ['Yash Dange', 'Sponsorship Team Co-Head', 'Sponsorship', '3rd Year', 'N/A', 'Managing partner relations and pitch competition prize pool packages.'],
 ];
