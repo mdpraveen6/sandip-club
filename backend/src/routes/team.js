@@ -10,16 +10,20 @@ const { logAudit, actorOf } = require('../utils/audit');
 
 const router = express.Router();
 
+const { isCloudinaryEnabled, uploadBuffer } = require('../config/cloudinary');
+
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
-  },
-});
+const storage = isCloudinaryEnabled()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => cb(null, uploadDir),
+      filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+        cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+      },
+    });
 
 const upload = multer({
   storage,
@@ -143,10 +147,26 @@ router.delete('/:id', requireAuth, requirePerm('team', 'remove'), async (req, re
 
 // POST /api/team/upload — admin photo upload, returns { url }.
 router.post('/upload', requireAuth, requirePerm('team', 'manage'), (req, res) => {
-  upload.single('photo')(req, res, (err) => {
+  upload.single('photo')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No photo attached (field name: photo)' });
-    return res.json({ ok: true, url: `/uploads/${req.file.filename}` });
+    try {
+      if (isCloudinaryEnabled()) {
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+        const base = path.basename(req.file.originalname, path.extname(req.file.originalname))
+          .replace(/[^a-zA-Z0-9-_]+/g, '-').slice(0, 60) || 'photo';
+        const result = await uploadBuffer(req.file.buffer, {
+          folder: 'sebc/team',
+          resourceType: 'image',
+          filename: `${Date.now()}-${Math.round(Math.random() * 1e6)}-${base}${ext}`,
+        });
+        return res.json({ ok: true, url: result.secure_url });
+      }
+      return res.json({ ok: true, url: `/uploads/${req.file.filename}` });
+    } catch (e) {
+      console.error('[photo:cloudinary]', e.message);
+      return res.status(500).json({ error: 'Photo upload failed. Try again.' });
+    }
   });
 });
 

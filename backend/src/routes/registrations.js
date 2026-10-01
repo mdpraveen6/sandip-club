@@ -8,12 +8,13 @@ const { isEmail, required } = require('../utils/validate');
 const { sendApprovalEmail, sendNewRegistrationAlert } = require('../utils/mailer');
 const AdminUser = require('../models/AdminUser');
 const { logAudit, actorOf } = require('../utils/audit');
+const { requireDb } = require('../config/db');
 
 const router = express.Router();
 const STATUSES = ['pending', 'shortlisted', 'rejected', 'accepted'];
 
 // POST /api/registrations — public, from the Register form.
-router.post('/', async (req, res) => {
+router.post('/', requireDb, async (req, res) => {
   try {
     const missing = required(req.body, [
       'fullName', 'prn', 'email', 'phone', 'ideaTitle', 'problemStatement', 'solutionOverview',
@@ -53,7 +54,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/registrations?search=&status=&page=&limit= — admin list.
-router.get('/', requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
+router.get('/', requireDb, requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
   try {
     const { search = '', status = '' } = req.query;
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -76,7 +77,7 @@ router.get('/', requireAuth, requirePerm('registrations', 'view'), async (req, r
 });
 
 // GET /api/registrations/export — admin CSV download. (Before /:id routes.)
-router.get('/export', requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
+router.get('/export', requireDb, requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
   try {
     const items = await Registration.find({}).sort({ createdAt: -1 }).lean();
     const cols = ['createdAt', 'fullName', 'prn', 'school', 'academicYear', 'gender', 'email', 'phone', 'ideaTitle', 'domain', 'teamType', 'problemStatement', 'solutionOverview', 'pitchDeckUrl', 'status', 'passRef', 'acceptedAt'];
@@ -92,7 +93,7 @@ router.get('/export', requireAuth, requirePerm('registrations', 'view'), async (
 });
 
 // PATCH /api/registrations/:id — admin: { status, notes }.
-router.patch('/:id', requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
+router.patch('/:id', requireDb, requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
   try {
     const update = {};
     if (req.body.status !== undefined) {
@@ -112,7 +113,7 @@ router.patch('/:id', requireAuth, requirePerm('registrations', 'manage'), async 
 });
 
 // DELETE /api/registrations/:id — admin.
-router.delete('/:id', requireAuth, requirePerm('registrations', 'remove'), async (req, res) => {
+router.delete('/:id', requireDb, requireAuth, requirePerm('registrations', 'remove'), async (req, res) => {
   try {
     const doc = await Registration.findByIdAndDelete(req.params.id);
     if (!doc) return res.status(404).json({ error: 'Registration not found' });
@@ -126,16 +127,21 @@ router.delete('/:id', requireAuth, requirePerm('registrations', 'remove'), async
 });
 
 // ---- Deck upload (public: used by the Register form before submit) ----
+// Cloudinary (persistent) when env vars are set, local disk fallback for dev.
+const { isCloudinaryEnabled, uploadBuffer } = require('../config/cloudinary');
+
 const deckDir = path.join(__dirname, '..', '..', 'uploads', 'decks');
 if (!fs.existsSync(deckDir)) fs.mkdirSync(deckDir, { recursive: true });
 const deckUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, deckDir),
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
-    },
-  }),
+  storage: isCloudinaryEnabled()
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (req, file, cb) => cb(null, deckDir),
+        filename: (req, file, cb) => {
+          const ext = path.extname(file.originalname).toLowerCase();
+          cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+        },
+      }),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const okExt = /\.(pdf|ppt|pptx|doc|docx)$/i.test(file.originalname || '');
@@ -147,10 +153,29 @@ const deckUpload = multer({
 
 // POST /api/registrations/upload-deck — public, returns { url } for pitchDeckUrl.
 router.post('/upload-deck', (req, res) => {
-  deckUpload.single('deck')(req, res, (err) => {
+  deckUpload.single('deck')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file attached (field name: deck)' });
-    return res.json({ ok: true, url: `/uploads/decks/${req.file.filename}` });
+    try {
+      if (isCloudinaryEnabled()) {
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.pdf';
+        const base = path.basename(req.file.originalname, path.extname(req.file.originalname))
+          .replace(/[^a-zA-Z0-9-_]+/g, '-').slice(0, 60) || 'deck';
+        // PDFs as image-type for public delivery + iframe preview.
+        // ppt/doc must stay raw (no preview, download only).
+        const resourceType = ext === '.pdf' ? 'image' : 'raw';
+        const result = await uploadBuffer(req.file.buffer, {
+          folder: 'sebc/decks',
+          resourceType,
+          filename: `${Date.now()}-${Math.round(Math.random() * 1e6)}-${base}${ext}`,
+        });
+        return res.json({ ok: true, url: result.secure_url });
+      }
+      return res.json({ ok: true, url: `/uploads/decks/${req.file.filename}` });
+    } catch (e) {
+      console.error('[deck:cloudinary]', e.message);
+      return res.status(500).json({ error: 'Deck upload failed. Try again.' });
+    }
   });
 });
 
@@ -165,7 +190,7 @@ async function mintRef() {
 }
 
 // POST /api/registrations/:id/accept — admin: approve, issue pass ref, email it.
-router.post('/:id/accept', requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
+router.post('/:id/accept', requireDb, requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
   try {
     const reg = await Registration.findById(req.params.id);
     if (!reg) return res.status(404).json({ error: 'Registration not found' });
@@ -193,7 +218,7 @@ router.post('/:id/accept', requireAuth, requirePerm('registrations', 'manage'), 
 });
 
 // POST /api/registrations/:id/resend — admin: re-send the approval email.
-router.post('/:id/resend', requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
+router.post('/:id/resend', requireDb, requireAuth, requirePerm('registrations', 'manage'), async (req, res) => {
   try {
     const reg = await Registration.findById(req.params.id);
     if (!reg) return res.status(404).json({ error: 'Registration not found' });
@@ -217,7 +242,7 @@ router.post('/:id/resend', requireAuth, requirePerm('registrations', 'manage'), 
 });
 
 // GET /api/registrations/pending-team — admin: accepted but not yet on the Team page.
-router.get('/pending-team', requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
+router.get('/pending-team', requireDb, requireAuth, requirePerm('registrations', 'view'), async (req, res) => {
   try {
     const items = await Registration.find({ status: 'accepted', addedToTeam: { $ne: true } })
       .sort({ acceptedAt: -1 })

@@ -58,7 +58,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/registrations", requireDb, registrationRoutes);
+app.use("/api/registrations", registrationRoutes);
 app.use("/api/events", requireDb, eventRoutes);
 app.use("/api/team", requireDb, teamRoutes);
 app.use("/api/admins", requireDb, adminRoutes);
