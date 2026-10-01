@@ -1021,7 +1021,7 @@ export const Admin = ({ navigateTo }) => {
             {mode === 'login' ? (
               <form onSubmit={login} className="space-y-4">
                 <Field label="Email">
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder="mdpraveen22@gmail.com" />
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder="Enter admin credentials" />
                 </Field>
                 <Field label="Password">
                   <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="field" placeholder="••••••••" />
@@ -1034,7 +1034,7 @@ export const Admin = ({ navigateTo }) => {
             ) : (
               <div className="space-y-4">
                 <Field label="Admin email">
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder="member@example.com" />
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder="Enter admin credentials" />
                 </Field>
                 {!codeSent ? (
                   <Button variant="gold" onClick={sendCode} disabled={busy || !email} className="w-full">
