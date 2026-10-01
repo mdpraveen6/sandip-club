@@ -7,6 +7,8 @@ import { Events } from './pages/Events';
 import { Register } from './pages/Register';
 import { Team } from './pages/Team';
 import { Admin } from './pages/Admin';
+import { Checkin } from './pages/Checkin';
+import { Feedback } from './pages/Feedback';
 import { api, getToken, clearToken } from './lib/api';
 import { SunLaunchpadLoader } from './components/SunLaunchpadLoader';
 
@@ -21,7 +23,8 @@ const NAV = [
 ];
 
 export default function App() {
-  const PAGE_IDS = ['home', 'events', 'register', 'team', 'admin', 'collaborators'];
+  // QR routes (checkin/feedback) are QR-only: valid pages but never in NAV/footer.
+  const PAGE_IDS = ['home', 'events', 'register', 'team', 'admin', 'collaborators', 'checkin', 'feedback'];
   const pageFromHash = () => {
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
     return PAGE_IDS.includes(h) ? h : 'home';
@@ -199,7 +202,19 @@ export default function App() {
       <div className="bg-cream-50 dark:bg-ink-950 aurora-bg text-emerald-950 dark:text-white min-h-screen font-sans transition-colors duration-300">
         <SunLaunchpadLoader />
         <main className="pt-4 sm:pt-6 pb-8 px-4 sm:px-8 max-w-7xl mx-auto w-full overflow-x-clip">
-          <Admin navigateTo={handlePageChange} />
+          <Admin navigateTo={handlePageChange} isDark={isDark} onToggleTheme={() => setIsDark(!isDark)} />
+        </main>
+      </div>
+    );
+  }
+
+  // QR-only routes: minimal chromeless shell, no nav/footer, no public links.
+  if (activePage === 'checkin' || activePage === 'feedback') {
+    return (
+      <div className="bg-cream-50 dark:bg-ink-950 aurora-bg text-emerald-950 dark:text-white min-h-screen font-sans transition-colors duration-300">
+        <SunLaunchpadLoader />
+        <main className="pt-4 sm:pt-6 pb-8 w-full overflow-x-clip">
+          {activePage === 'checkin' ? <Checkin /> : <Feedback />}
         </main>
       </div>
     );

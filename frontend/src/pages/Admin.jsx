@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { CheckinTab } from '../components/AdminCheckin';
+import { FeedbackTab } from '../components/AdminFeedback';
 import { api, apiBase, getToken, setToken, clearToken, photoUrl } from '../lib/api';
 
 const fmtDate = (iso) => {
@@ -889,7 +891,7 @@ const ActivityTab = ({ notify }) => {
 };
 
 /* ================= SHELL ================= */
-export const Admin = ({ navigateTo }) => {
+export const Admin = ({ navigateTo, isDark, onToggleTheme }) => {
   const [token, setTok] = useState(getToken());
   const [me, setMe] = useState(null);
   const [checking, setChecking] = useState(!!getToken());
@@ -1003,6 +1005,17 @@ export const Admin = ({ navigateTo }) => {
   if (!token || !me) {
     return (
       <div className="max-w-md mx-auto pt-4 sm:pt-6 pb-8">
+        {onToggleTheme && (
+          <div className="flex justify-end mb-3">
+            <button
+              onClick={onToggleTheme}
+              aria-label="Toggle theme"
+              className="w-10 h-10 rounded-full border border-black/10 dark:border-gold-500/40 flex items-center justify-center hover:border-gold-500/60 transition bg-black/[0.03] dark:bg-gold-500/15 text-slate-700 dark:text-cream-100 dark:shadow-glow-gold"
+            >
+              <i className={`fa-solid text-base ${isDark ? 'fa-sun text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]' : 'fa-moon text-emerald-700'}`} />
+            </button>
+          </div>
+        )}
         <motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
           <Card hairline className="!p-8 space-y-5">
             <div className="text-center space-y-2">
@@ -1064,10 +1077,13 @@ export const Admin = ({ navigateTo }) => {
   }
 
   const can = (mod, act) => me.role === 'super' || !!(me.permissions && me.permissions[mod] && me.permissions[mod][act]);
+  const canEvent = can('registrations', 'view') || can('events', 'view');
   const tabs = [
     { id: 'registrations', label: 'Registrations', icon: 'fa-inbox', show: can('registrations', 'view') },
     { id: 'events', label: 'Events', icon: 'fa-calendar-days', show: can('events', 'view') },
     { id: 'team', label: 'Team', icon: 'fa-users', show: can('team', 'view') },
+    { id: 'checkin', label: 'Check-in', icon: 'fa-qrcode', show: canEvent },
+    { id: 'feedback', label: 'Feedback', icon: 'fa-star', show: canEvent },
   ];
   if (me.role === 'super') {
     tabs.push({ id: 'access', label: 'Access', icon: 'fa-key', show: true });
@@ -1091,6 +1107,15 @@ export const Admin = ({ navigateTo }) => {
             )}
           </p>
         </div>
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            aria-label="Toggle theme"
+            className="w-10 h-10 shrink-0 rounded-full border border-black/10 dark:border-gold-500/40 flex items-center justify-center hover:border-gold-500/60 transition bg-black/[0.03] dark:bg-gold-500/15 text-slate-700 dark:text-cream-100 dark:shadow-glow-gold"
+          >
+            <i className={`fa-solid text-base ${isDark ? 'fa-sun text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]' : 'fa-moon text-emerald-700'}`} />
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
@@ -1171,6 +1196,8 @@ export const Admin = ({ navigateTo }) => {
               {activeTab === 'registrations' && can('registrations', 'view') && <RegistrationsTab notify={notify} canManage={can('registrations', 'manage')} canRemove={can('registrations', 'remove')} />}
               {activeTab === 'events' && can('events', 'view') && <EventsTab notify={notify} canManage={can('events', 'manage')} canRemove={can('events', 'remove')} />}
               {activeTab === 'team' && can('team', 'view') && <TeamTab notify={notify} canManage={can('team', 'manage')} canRemove={can('team', 'remove')} />}
+              {activeTab === 'checkin' && canEvent && <CheckinTab notify={notify} />}
+              {activeTab === 'feedback' && canEvent && <FeedbackTab notify={notify} />}
               {activeTab === 'access' && me.role === 'super' && <AccessTab notify={notify} />}
               {activeTab === 'activity' && me.role === 'super' && <ActivityTab notify={notify} />}
             </motion.div>

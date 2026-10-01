@@ -107,4 +107,65 @@ export const api = {
   // ---- activity trail (super only) ----
   auditList: ({ actor = '', entity = '', action = '', page = 1, limit = 50 } = {}) =>
     req(`/api/audit?actor=${encodeURIComponent(actor)}&entity=${encodeURIComponent(entity)}&action=${encodeURIComponent(action)}&page=${page}&limit=${limit}`),
+
+  // ---- QR #1: event check-in (public) ----
+  checkin: (payload) => req('/api/checkin', { method: 'POST', body: payload }),
+  checkinLookup: () => req('/api/checkin/lookup'),
+  checkinStatus: () => req('/api/checkin/admin/status'),
+  checkinTeams: () => req('/api/checkin/admin/teams'),
+
+  // ---- QR #2: peer feedback (public + admin) ----
+  feedbackActive: () => req('/api/feedback/active'),
+  feedbackVerify: (payload) => req('/api/feedback/verify', { method: 'POST', body: payload }),
+  feedbackSubmit: (payload) => req('/api/feedback/submit', { method: 'POST', body: payload }),
+  feedbackAdminStatus: () => req('/api/feedback/admin/status'),
+  feedbackAdminStart: (teamNumber) => req('/api/feedback/admin/start', { method: 'POST', body: { teamNumber } }),
+  feedbackAdminClose: () => req('/api/feedback/admin/close', { method: 'POST' }),
+  feedbackAdminResults: (sessionId = '') =>
+    req(`/api/feedback/admin/results${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`),
+  feedbackAdminResultsByTeam: (teamNumber) =>
+    req(`/api/feedback/admin/results?teamNumber=${encodeURIComponent(teamNumber)}`),
+  feedbackAdminHistory: () => req('/api/feedback/admin/results?history=1'),
+  feedbackAdminExport: async (sessionId) => {
+    const t = getToken();
+    const res = await fetch(`${BASE}/api/feedback/admin/export?sessionId=${encodeURIComponent(sessionId)}`, {
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `team-feedback-${sessionId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  feedbackAdminExportByTeam: async (teamNumber) => {
+    const t = getToken();
+    const res = await fetch(`${BASE}/api/feedback/admin/export?teamNumber=${encodeURIComponent(teamNumber)}`, {
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `team-${String(teamNumber).padStart(2, '0')}-feedback.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  feedbackAdminExportAll: async () => {
+    const t = getToken();
+    const res = await fetch(`${BASE}/api/feedback/admin/export-all`, {
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all-teams-feedback.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
