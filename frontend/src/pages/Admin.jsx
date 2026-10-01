@@ -41,7 +41,12 @@ const Field = ({ label, children }) => (
   </div>
 );
 
-const deckHref = (u) => (u && u.startsWith('/uploads/') ? `${apiBase}${u}` : null);
+const deckHref = (u) => {
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  if (u.startsWith('/uploads/')) return `${apiBase}${u}`;
+  return null;
+};
 
 /* ================= REGISTRATIONS ================= */
 const RegistrationsTab = ({ notify, canManage, canRemove }) => {

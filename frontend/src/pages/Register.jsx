@@ -122,8 +122,10 @@ export const Register = ({ onApplicationReceived }) => {
       try {
         const up = await api.uploadDeck(deckFile);
         deckUrl = up.url || '';
-      } catch {
-        deckUrl = '';
+      } catch (e) {
+        setSubmitting(false);
+        setSubmitError(`Deck upload failed: ${e.message} — remove the file to submit without deck, or try again.`);
+        return;
       }
     }
     const payload = {
