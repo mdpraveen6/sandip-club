@@ -22,11 +22,17 @@ const registrationSchema = new mongoose.Schema(
     passRef: { type: String, default: '' },
     acceptedAt: { type: Date, default: null },
     addedToTeam: { type: Boolean, default: false },
+    // Event check-in (QR #1): official team number assigned by server order.
+    teamNumber: { type: Number, default: null },
+    checkedInAt: { type: Date, default: null },
+    checkinStatus: { type: String, enum: ['pending', 'checked-in'], default: 'pending' },
   },
   { timestamps: true }
 );
 
 registrationSchema.index({ email: 1, createdAt: -1 });
 registrationSchema.index({ status: 1 });
+registrationSchema.index({ teamNumber: 1 }, { unique: true, sparse: true });
+registrationSchema.index({ status: 1, teamNumber: 1 });
 
 module.exports = mongoose.model('Registration', registrationSchema);

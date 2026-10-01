@@ -9,6 +9,8 @@ const eventRoutes = require("./routes/events");
 const teamRoutes = require("./routes/team");
 const adminRoutes = require("./routes/admins");
 const auditRoutes = require("./routes/audit");
+const checkinRoutes = require("./routes/checkin");
+const feedbackRoutes = require("./routes/feedback");
 
 const app = express();
 
@@ -63,6 +65,8 @@ app.use("/api/events", requireDb, eventRoutes);
 app.use("/api/team", requireDb, teamRoutes);
 app.use("/api/admins", requireDb, adminRoutes);
 app.use("/api/audit", requireDb, auditRoutes);
+app.use("/api/checkin", checkinRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "API route not found" });
