@@ -23,7 +23,9 @@ const registrationSchema = new mongoose.Schema(
     acceptedAt: { type: Date, default: null },
     addedToTeam: { type: Boolean, default: false },
     // Event check-in (QR #1): official team number assigned by server order.
-    teamNumber: { type: Number, default: null },
+    // Absent (undefined) = not checked in. Never store explicit null: with a
+    // plain unique index multiple nulls collide (E11000 { teamNumber: null }).
+    teamNumber: { type: Number, default: undefined },
     checkedInAt: { type: Date, default: null },
     checkinStatus: { type: String, enum: ['pending', 'checked-in'], default: 'pending' },
   },
@@ -32,7 +34,12 @@ const registrationSchema = new mongoose.Schema(
 
 registrationSchema.index({ email: 1, createdAt: -1 });
 registrationSchema.index({ status: 1 });
-registrationSchema.index({ teamNumber: 1 }, { unique: true, sparse: true });
+// Partial unique: only numeric teamNumbers are indexed, so unlimited
+// not-checked-in docs (missing field) never collide. Replaces old sparse index.
+registrationSchema.index(
+  { teamNumber: 1 },
+  { unique: true, partialFilterExpression: { teamNumber: { $type: 'number' } }, name: 'teamNumber_partial_unique' }
+);
 registrationSchema.index({ status: 1, teamNumber: 1 });
 
 module.exports = mongoose.model('Registration', registrationSchema);

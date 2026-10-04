@@ -257,7 +257,7 @@ router.post('/admin/start', requireDb, requireAuth, async (req, res) => {
       teamNumber: reg.teamNumber,
       status: 'ACTIVE',
     });
-    const checkedCount = await Registration.countDocuments({ status: { $in: ELIGIBLE_STATUSES }, teamNumber: { $ne: null } });
+    const checkedCount = await Registration.countDocuments({ status: { $in: ELIGIBLE_STATUSES }, teamNumber: { $type: 'number' } });
     await PresentationSession.updateOne({ _id: session._id }, { $set: { expectedCount: checkedCount } });
     return res.status(201).json({ ok: true, session });
   } catch (err) {
@@ -378,8 +378,7 @@ router.get('/admin/export-all', requireDb, requireAuth, async (req, res) => {
   }
 });
 
-router.get('/admin/results', requireDb, requireAuth, async (req, res) => {
-  try {
+router.get('/admin/results', requireDb, requireAuth, async (req, res) => {  try {
     const session = await getActiveSession();
     // ?history=1 returns all sessions with response counts + titles (persists after close)
     if (req.query.history === '1') {
@@ -429,6 +428,48 @@ router.get('/admin/results', requireDb, requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[feedback:results]', err.message);
     return res.status(500).json({ error: 'Could not load results' });
+  }
+});
+
+// DELETE /api/feedback/admin/by-team/:teamNumber — delete one team's history.
+// Removes its PresentationSessions + Feedback given TO it. Reviews it gave to
+// other teams (reviewerTeamNumber) are kept as part of those teams' history.
+router.delete('/admin/by-team/:teamNumber', requireDb, requireAuth, async (req, res) => {
+  try {
+    const teamNumber = Number(req.params.teamNumber);
+    if (!Number.isInteger(teamNumber)) return res.status(400).json({ error: 'Valid teamNumber is required' });
+    const sessions = await PresentationSession.find({ teamNumber }).select('_id').lean();
+    const ids = sessions.map((s) => s._id);
+    const fb = ids.length ? await Feedback.deleteMany({ presentationSessionId: { $in: ids } }) : { deletedCount: 0 };
+    // Legacy/docs keyed directly by presenting teamNumber (not session id).
+    const fbDirect = await Feedback.deleteMany({ teamNumber });
+    const sess = await PresentationSession.deleteMany({ teamNumber });
+    const { logAudit, actorOf } = require('../utils/audit');
+    const who = actorOf(req);
+    logAudit({ ...who, action: 'delete', entity: 'feedback', entityId: `team-${teamNumber}`, summary: `Deleted feedback history TEAM ${teamNumber} (${fb.deletedCount + fbDirect.deletedCount} responses, ${sess.deletedCount} sessions)` }).catch(() => {});
+    return res.json({ ok: true, deletedFeedback: (fb.deletedCount || 0) + (fbDirect.deletedCount || 0), deletedSessions: sess.deletedCount });
+  } catch (err) {
+    console.error('[feedback:delete-team]', err.message);
+    return res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
+// DELETE /api/feedback/admin/all — delete ALL feedback history (every team).
+// Closes any ACTIVE session first. Reviewer browser tokens are kept.
+router.delete('/admin/all', requireDb, requireAuth, async (req, res) => {
+  try {
+    await PresentationSession.updateMany({ status: 'ACTIVE' }, { $set: { status: 'CLOSED', endedAt: new Date() } });
+    const [fb, sess] = await Promise.all([
+      Feedback.deleteMany({}),
+      PresentationSession.deleteMany({}),
+    ]);
+    const { logAudit, actorOf } = require('../utils/audit');
+    const who = actorOf(req);
+    logAudit({ ...who, action: 'delete', entity: 'feedback', entityId: 'all', summary: `Deleted ALL feedback (${fb.deletedCount} responses, ${sess.deletedCount} sessions)` }).catch(() => {});
+    return res.json({ ok: true, deletedFeedback: fb.deletedCount, deletedSessions: sess.deletedCount });
+  } catch (err) {
+    console.error('[feedback:delete-all]', err.message);
+    return res.status(500).json({ error: 'Delete failed' });
   }
 });
 

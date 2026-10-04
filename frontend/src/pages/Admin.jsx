@@ -63,6 +63,20 @@ const RegistrationsTab = ({ notify, canManage, canRemove }) => {
   const [notesId, setNotesId] = useState(null);
   const [notesDraft, setNotesDraft] = useState('');
   const [acceptingId, setAcceptingId] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [bulkStatus, setBulkStatus] = useState('shortlisted');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [mapping, setMapping] = useState({});
+  const [importResult, setImportResult] = useState(null);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
+  const [rowMenuId, setRowMenuId] = useState(null);
+  const [editingReg, setEditingReg] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editBusy, setEditBusy] = useState(false);
+  const [deckBusy, setDeckBusy] = useState(false);
 
   const load = async (p = page) => {
     setLoading(true);
@@ -73,6 +87,53 @@ const RegistrationsTab = ({ notify, canManage, canRemove }) => {
     setLoading(false);
   };
   useEffect(() => { load(1); /* eslint-disable-next-line */ }, [status]);
+
+  const toggleOne = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const pageIds = items.map((r) => r._id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const toggleAllPage = () => {
+    if (allPageSelected) setSelected((s) => s.filter((id) => !pageIds.includes(id)));
+    else setSelected((s) => [...new Set([...s, ...pageIds])]);
+  };
+
+  const doBulkStatus = async () => {
+    if (!selected.length) return;
+    if (!window.confirm(`Set ${selected.length} selected to "${bulkStatus}"?`)) return;
+    setBulkBusy(true);
+    try { const d = await api.bulkStatus(selected, bulkStatus); notify('ok', `Updated ${d.modified}`); setSelected([]); load(); }
+    catch (e) { notify('error', e.message); }
+    setBulkBusy(false);
+  };
+  const doBulkDelete = async () => {
+    if (!selected.length) return;
+    if (!window.confirm(`Delete ${selected.length} selected registrations? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    try { const d = await api.bulkDelete(selected); notify('ok', `Deleted ${d.deleted}`); setSelected([]); load(); }
+    catch (e) { notify('error', e.message); }
+    setBulkBusy(false);
+  };
+
+  const onImportFile = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    setImportBusy(true); setImportResult(null);
+    try {
+      const d = await api.importPreview(f);
+      setPreview(d); setMapping(d.suggestedMapping || {}); setShowImport(true);
+    } catch (err) { notify('error', err.message); }
+    setImportBusy(false);
+  };
+  const doImportConfirm = async () => {
+    if (!preview || !preview.rows) return;
+    setImportBusy(true);
+    try {
+      const d = await api.importConfirm(preview.rows, mapping);
+      setImportResult(d); notify('ok', `Import: ${d.created} new, ${d.updated} updated`);
+      load(1);
+    } catch (err) { notify('error', err.message); }
+    setImportBusy(false);
+  };
 
   const setStatusOf = async (id, s) => {
     try { await api.updateRegistration(id, { status: s }); notify('ok', 'Status updated'); load(); }
@@ -105,16 +166,71 @@ const RegistrationsTab = ({ notify, canManage, canRemove }) => {
     try { await api.deleteRegistration(id); notify('ok', 'Deleted'); load(); }
     catch (e) { notify('error', e.message); }
   };
+  const openFullEdit = (r) => {
+    setRowMenuId(null);
+    setEditingReg(r);
+    setEditForm({
+      fullName: r.fullName || '', prn: r.prn || '', school: r.school || '', academicYear: r.academicYear || '',
+      gender: r.gender || '', email: r.email || '', phone: r.phone || '', ideaTitle: r.ideaTitle || '',
+      domain: r.domain || '', teamType: r.teamType || 'Solo Founder', problemStatement: r.problemStatement || '',
+      solutionOverview: r.solutionOverview || '', pitchDeckUrl: r.pitchDeckUrl || '', status: r.status || 'pending',
+      notes: r.notes || '',
+    });
+  };
+  const saveFullEdit = async () => {
+    if (!editingReg) return;
+    setEditBusy(true);
+    try { await api.updateRegistration(editingReg._id, editForm); notify('ok', 'Registration updated'); setEditingReg(null); load(); }
+    catch (e) { notify('error', e.message); }
+    setEditBusy(false);
+  };
+  const onDeckFile = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    setDeckBusy(true);
+    try {
+      const d = await api.uploadDeck(f);
+      setEditForm((p) => ({ ...p, pitchDeckUrl: d.url }));
+      notify('ok', 'PPT uploaded — Save to apply');
+    } catch (err) { notify('error', err.message); }
+    setDeckBusy(false);
+  };
+  const removeDeck = async (id, name) => {
+    if (!window.confirm(`Remove PPT of ${name}?`)) return;
+    setRowMenuId(null);
+    try { await api.updateRegistration(id, { pitchDeckUrl: '' }); notify('ok', 'PPT removed'); load(); }
+    catch (e) { notify('error', e.message); }
+  };
+
+  const dbFields = (preview && preview.dbFields) || ['fullName', 'prn', 'school', 'academicYear', 'gender', 'email', 'phone', 'ideaTitle', 'domain', 'teamType', 'problemStatement', 'solutionOverview', 'pitchDeckUrl', 'status', 'notes'];
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
-        <div className="flex gap-2 flex-1">
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+        <div className="flex gap-2 flex-1 items-center">
+          <div className="relative shrink-0">
+            <button onClick={() => setTableMenuOpen((v) => !v)} className="w-10 h-10 rounded-full border border-black/10 dark:border-white/15 opacity-70 hover:opacity-100 hover:border-gold-500/60 transition flex items-center justify-center" title="Table actions">
+              <i className="fa-solid fa-ellipsis-vertical" />
+            </button>
+            {tableMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setTableMenuOpen(false)} />
+                <div className="absolute left-0 top-12 z-50 w-56 rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-ink-900 shadow-xl p-2 space-y-1">
+                  <div className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider opacity-50">All registrations</div>
+                  <button onClick={() => { setTableMenuOpen(false); load(1); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">↻ Refresh list</button>
+                  <button onClick={() => { setTableMenuOpen(false); api.exportRegistrations().catch((e) => notify('error', e.message)); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">⤓ Export all CSV ({total})</button>
+                  <button disabled={!selected.length} onClick={() => { setTableMenuOpen(false); api.exportSelected(selected).catch((e) => notify('error', e.message)); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40">⤓ Export selected ({selected.length})</button>
+                  <button onClick={() => { setTableMenuOpen(false); setSelected([]); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">✕ Clear selection</button>
+                </div>
+              </>
+            )}
+          </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(1)}
             placeholder="Search name, email, PRN, idea…" className="field max-w-sm" />
           <Button variant="outline" onClick={() => load(1)}>Search</Button>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="field !w-auto">
             <option value="">All statuses</option>
             <option value="pending">Pending</option>
@@ -122,84 +238,161 @@ const RegistrationsTab = ({ notify, canManage, canRemove }) => {
             <option value="accepted">Accepted</option>
             <option value="rejected">Rejected</option>
           </select>
+          {canManage && (
+            <label className="px-4 py-2.5 rounded-full font-mono text-[11px] font-bold border border-black/10 dark:border-white/15 hover:border-emerald-500 cursor-pointer inline-flex items-center gap-1.5">
+              <i className="fa-solid fa-file-excel" /> {importBusy ? 'Reading…' : 'Import Excel'}
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={onImportFile} className="hidden" />
+            </label>
+          )}
           <Button variant="gold" onClick={() => api.exportRegistrations().catch((e) => notify('error', e.message))}>
             <i className="fa-solid fa-download" /> CSV ({total})
           </Button>
         </div>
       </div>
 
+      {selected.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-2xl bg-gold-500/10 border border-gold-500/30">
+          <span className="font-mono text-xs font-bold">{selected.length} selected</span>
+          {canManage && (
+            <>
+              <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="field !w-auto !py-2">
+                <option value="pending">pending</option>
+                <option value="shortlisted">shortlisted</option>
+                <option value="accepted">accepted</option>
+                <option value="rejected">rejected</option>
+              </select>
+              <Button variant="gold" disabled={bulkBusy} onClick={doBulkStatus} className="!py-2 !px-4 !text-[11px]">Apply status</Button>
+            </>
+          )}
+          <Button variant="outline" disabled={bulkBusy} onClick={() => api.exportSelected(selected).catch((e) => notify('error', e.message))} className="!py-2 !px-4 !text-[11px]">Export selected</Button>
+          {canRemove && (
+            <button disabled={bulkBusy} onClick={doBulkDelete} className="px-4 py-2 rounded-full font-mono text-[11px] font-bold border border-rose-500/50 text-rose-500 hover:bg-rose-500/10 transition">
+              Delete selected
+            </button>
+          )}
+          <button onClick={() => setSelected([])} className="font-mono text-[11px] opacity-60 hover:opacity-100 ml-auto">Clear</button>
+        </div>
+      )}
+
       <Card className="!p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[1080px]">
+        <div>
+          <table className="w-full text-sm">
             <thead>
               <tr className="text-left font-mono text-[10px] uppercase tracking-wider opacity-60 border-b border-black/10 dark:border-white/10">
-                <th className="px-4 py-3 font-bold w-[20%]">Founder</th>
-                <th className="px-4 py-3 font-bold w-[24%]">Idea &amp; deck</th>
-                <th className="px-4 py-3 font-bold w-[18%]">Contact</th>
-                <th className="px-4 py-3 font-bold w-[14%]">School</th>
-                <th className="px-4 py-3 font-bold">Applied</th>
-                <th className="px-4 py-3 font-bold">Pass</th>
-                <th className="px-4 py-3 font-bold">Review</th>
-                <th className="px-4 py-3 font-bold" />
+                <th className="px-3 py-3 font-bold w-8">
+                  <input type="checkbox" checked={allPageSelected} onChange={toggleAllPage} className="w-4 h-4 accent-emerald-600" title="Select page" />
+                </th>
+                <th className="px-3 py-3 font-bold">Founder</th>
+                <th className="px-3 py-3 font-bold">Idea &amp; deck</th>
+                <th className="px-3 py-3 font-bold">Contact</th>
+                <th className="px-3 py-3 font-bold">School</th>
+                <th className="px-3 py-3 font-bold">Info</th>
+                <th className="px-3 py-3 font-bold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-10 text-center opacity-60">Loading…</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center opacity-60">Loading…</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-10 text-center opacity-60">No registrations yet. Share the Register page to get the first one.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center opacity-60">No registrations yet. Share the Register page to get the first one.</td></tr>
               ) : items.map((r) => (
                 <React.Fragment key={r._id}>
                   <tr className="border-b border-black/5 dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] align-top">
-                    <td className="px-4 py-3">
-                      <div className="font-display font-bold whitespace-nowrap">{r.fullName}</div>
-                      <div className="font-mono text-[11px] opacity-60 whitespace-nowrap">{r.prn} · {r.teamType}</div>
+                    <td className="px-3 py-3">
+                      <input type="checkbox" checked={selected.includes(r._id)} onChange={() => toggleOne(r._id)} className="w-4 h-4 accent-emerald-600 mt-1" />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="font-bold truncate max-w-[220px]" title={r.ideaTitle}>{r.ideaTitle}</div>
-                      <div className="font-mono text-[11px] opacity-60">{r.domain}</div>
+                    <td className="px-3 py-3 min-w-0">
+                      <div className="font-display font-bold break-words">{r.fullName}</div>
+                      <div className="font-mono text-[11px] opacity-60 break-words">{r.prn} · {r.teamType}</div>
+                    </td>
+                    <td className="px-3 py-3 min-w-0">
+                      <div className="font-bold break-words line-clamp-2" title={r.ideaTitle}>{r.ideaTitle}</div>
+                      <div className="font-mono text-[11px] opacity-60 break-words">{r.domain}</div>
                       {deckHref(r.pitchDeckUrl) ? (
                         <a href={deckHref(r.pitchDeckUrl)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 mt-1 font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-300 hover:text-gold-500 transition">
                           <i className="fa-solid fa-file-arrow-down" /> View deck
                         </a>
                       ) : (
-                        <div className="font-mono text-[11px] opacity-40 mt-1">{r.pitchDeckUrl ? r.pitchDeckUrl : 'No deck attached'}</div>
+                        <div className="font-mono text-[11px] opacity-40 mt-1 break-words">{r.pitchDeckUrl ? r.pitchDeckUrl : 'No deck'}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs">
-                      <div className="truncate max-w-[190px]" title={r.email}>{r.email}</div>
+                    <td className="px-3 py-3 font-mono text-xs min-w-0">
+                      <div className="break-all">{r.email}</div>
                       <div className="opacity-60">{r.phone}</div>
                     </td>
-                    <td className="px-4 py-3 text-xs">
-                      <div className="truncate max-w-[150px] opacity-80" title={r.school}>{r.school}</div>
+                    <td className="px-3 py-3 text-xs min-w-0">
+                      <div className="opacity-80 break-words" title={r.school}>{r.school}</div>
                       <div className="opacity-60">{r.academicYear}</div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[11px] whitespace-nowrap opacity-70">{fmtDate(r.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      {r.passRef ? (
-                        <span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-bold whitespace-nowrap bg-gold-500/10 text-gold-600 dark:text-gold-300 border border-gold-500/30">{r.passRef}</span>
-                      ) : (
-                        <span className="font-mono text-[11px] opacity-40">—</span>
-                      )}
+                    <td className="px-3 py-3 min-w-0">
+                      <div className="font-mono text-[11px] opacity-70 break-words">{fmtDate(r.createdAt)}</div>
+                      <div className="mt-1">
+                        {r.passRef ? (
+                          <span className="inline-block px-2.5 py-1 rounded-full font-mono text-[10px] font-bold bg-gold-500/10 text-gold-600 dark:text-gold-300 border border-gold-500/30 break-all">{r.passRef}</span>
+                        ) : (
+                          <span className="font-mono text-[11px] opacity-40">—</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => { setExpandedId(expandedId === r._id ? null : r._id); setNotesId(null); }}
-                        className={`w-9 h-9 rounded-full border transition flex items-center justify-center ${expandedId === r._id ? 'bg-gradient-gold text-[#1A1405] border-transparent' : 'border-black/10 dark:border-white/15 opacity-70 hover:opacity-100 hover:border-gold-500/60'}`}
-                        title="Review application">
-                        <i className={`fa-solid ${expandedId === r._id ? 'fa-chevron-up' : 'fa-magnifying-glass'} text-xs`} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {canRemove && (
-                        <button onClick={() => remove(r._id, r.fullName)} className="w-8 h-8 rounded-full border border-black/10 dark:border-white/15 text-xs opacity-60 hover:opacity-100 hover:text-rose-500 hover:border-rose-500 transition" title="Delete">
-                          <i className="fa-solid fa-trash" />
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => { setExpandedId(expandedId === r._id ? null : r._id); setNotesId(null); setRowMenuId(null); }}
+                          className={`w-9 h-9 rounded-full border transition flex items-center justify-center shrink-0 ${expandedId === r._id ? 'bg-gradient-gold text-[#1A1405] border-transparent' : 'border-black/10 dark:border-white/15 opacity-70 hover:opacity-100 hover:border-gold-500/60'}`}
+                          title="Review application">
+                          <i className={`fa-solid ${expandedId === r._id ? 'fa-chevron-up' : 'fa-magnifying-glass'} text-xs`} />
                         </button>
-                      )}
+                        <div className="relative shrink-0">
+                          <button onClick={() => setRowMenuId(rowMenuId === r._id ? null : r._id)}
+                            className="w-9 h-9 rounded-full border border-black/10 dark:border-white/15 opacity-70 hover:opacity-100 hover:border-gold-500/60 transition flex items-center justify-center" title="More actions">
+                            <i className="fa-solid fa-ellipsis-vertical text-xs" />
+                          </button>
+                          {rowMenuId === r._id && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setRowMenuId(null)} />
+                              <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-ink-900 shadow-xl p-2 space-y-1">
+                                <div className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider opacity-50 truncate">{r.fullName}</div>
+                                {canManage && (
+                                  <button onClick={() => openFullEdit(r)} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">✎ Full edit (all fields)</button>
+                                )}
+                                {canManage && (
+                                  <label className="block px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">
+                                    ⤒ {r.pitchDeckUrl ? 'Replace PPT' : 'Add PPT'}
+                                    <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx" className="hidden" onChange={async (e) => {
+                                      const f = e.target.files && e.target.files[0];
+                                      e.target.value = '';
+                                      if (!f) return;
+                                      try { const d = await api.uploadDeck(f); await api.updateRegistration(r._id, { pitchDeckUrl: d.url }); notify('ok', 'PPT saved'); setRowMenuId(null); load(); }
+                                      catch (err) { notify('error', err.message); }
+                                    }} />
+                                  </label>
+                                )}
+                                {canManage && r.pitchDeckUrl && (
+                                  <button onClick={() => removeDeck(r._id, r.fullName)} className="w-full text-left px-3 py-2 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10">🗑 Remove PPT</button>
+                                )}
+                                {canManage && r.status !== 'accepted' && (
+                                  <button onClick={() => { setRowMenuId(null); acceptOne(r); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">✔ Accept & issue pass</button>
+                                )}
+                                {canManage && r.status === 'accepted' && (
+                                  <button onClick={() => { setRowMenuId(null); resendOne(r); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-black/5 dark:hover:bg-white/10">✉ Resend pass mail</button>
+                                )}
+                                {canRemove && (
+                                  <button onClick={() => { setRowMenuId(null); remove(r._id, r.fullName); }} className="w-full text-left px-3 py-2 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10">Delete registration</button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {canRemove && (
+                          <button onClick={() => remove(r._id, r.fullName)} className="w-8 h-8 rounded-full border border-black/10 dark:border-white/15 text-xs opacity-60 hover:opacity-100 hover:text-rose-500 hover:border-rose-500 transition shrink-0" title="Delete">
+                            <i className="fa-solid fa-trash" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {expandedId === r._id && (
                     <tr key={`${r._id}-x`} className="border-b border-gold-500/20 bg-gold-500/[0.04]">
-                      <td colSpan={8} className="px-4 py-4">
+                      <td colSpan={7} className="px-3 py-4">
                         <div className="rounded-xl border border-gold-500/30 bg-gold-500/[0.05] p-3.5 mb-3">
                           <div className="field-label mb-2">Attached document — review before accepting</div>
                           {deckHref(r.pitchDeckUrl) ? (
@@ -287,6 +480,97 @@ const RegistrationsTab = ({ notify, canManage, canRemove }) => {
           <Button variant="outline" onClick={() => page < pages && load(page + 1)} className="!px-4 !py-2">Next →</Button>
         </div>
       </div>
+
+      {showImport && preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowImport(false)}>
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-ink-900 border border-black/10 dark:border-white/15 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-lg">Import Excel — map columns</h3>
+              <button onClick={() => setShowImport(false)} className="w-9 h-9 rounded-full border border-black/10 dark:border-white/15 opacity-70 hover:opacity-100"><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <p className="text-sm opacity-70">{preview.totalRows} rows found. Match your Excel columns to registration fields. Duplicates by email will be <b>updated</b>.</p>
+            <div className="space-y-2">
+              {preview.headers.map((h) => (
+                <div key={h} className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl border border-black/10 dark:border-white/10 px-3 py-2">
+                  <span className="font-mono text-xs font-bold flex-1 break-all">{h}</span>
+                  <span className="opacity-40 text-xs">→</span>
+                  <select value={mapping[h] || ''} onChange={(e) => setMapping({ ...mapping, [h]: e.target.value })} className="field !w-auto !py-2">
+                    <option value="">Ignore</option>
+                    {dbFields.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+            {preview.preview && preview.preview.length > 0 && (
+              <div className="rounded-xl border border-black/10 dark:border-white/10 p-3">
+                <div className="field-label mb-2">First row preview</div>
+                <pre className="font-mono text-[11px] whitespace-pre-wrap break-all opacity-80">{JSON.stringify(preview.preview[0], null, 2)}</pre>
+              </div>
+            )}
+            {importResult && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 font-mono text-xs space-y-1">
+                <div>Created: {importResult.created} · Updated: {importResult.updated} · Skipped: {importResult.skipped}</div>
+                {(importResult.errors || []).slice(0, 8).map((er, i) => (
+                  <div key={i} className="text-rose-500">Row {er.row} ({er.email}): {er.reason}</div>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="gold" disabled={importBusy} onClick={doImportConfirm}>{importBusy ? 'Importing…' : `Confirm import (${preview.totalRows})`}</Button>
+              <Button variant="secondary" onClick={() => setShowImport(false)}>Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingReg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setEditingReg(null)}>
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-ink-900 border border-black/10 dark:border-white/15 p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-lg">Edit — {editingReg.fullName}</h3>
+              <button onClick={() => setEditingReg(null)} className="w-9 h-9 rounded-full border border-black/10 dark:border-white/15 opacity-70 hover:opacity-100"><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="space-y-1"><span className="field-label">Full name *</span><input value={editForm.fullName || ''} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">PRN *</span><input value={editForm.prn || ''} onChange={(e) => setEditForm({ ...editForm, prn: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Email *</span><input value={editForm.email || ''} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Phone *</span><input value={editForm.phone || ''} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">School</span><input value={editForm.school || ''} onChange={(e) => setEditForm({ ...editForm, school: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Academic year</span><input value={editForm.academicYear || ''} onChange={(e) => setEditForm({ ...editForm, academicYear: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Gender</span><input value={editForm.gender || ''} onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Domain</span><input value={editForm.domain || ''} onChange={(e) => setEditForm({ ...editForm, domain: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Team type</span><input value={editForm.teamType || ''} onChange={(e) => setEditForm({ ...editForm, teamType: e.target.value })} className="field" /></label>
+              <label className="space-y-1"><span className="field-label">Status</span>
+                <select value={editForm.status || 'pending'} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className="field">
+                  <option value="pending">pending</option><option value="shortlisted">shortlisted</option><option value="accepted">accepted</option><option value="rejected">rejected</option>
+                </select>
+              </label>
+            </div>
+            <label className="space-y-1 block"><span className="field-label">Idea title *</span><input value={editForm.ideaTitle || ''} onChange={(e) => setEditForm({ ...editForm, ideaTitle: e.target.value })} className="field" /></label>
+            <label className="space-y-1 block"><span className="field-label">Problem statement *</span><textarea rows={3} value={editForm.problemStatement || ''} onChange={(e) => setEditForm({ ...editForm, problemStatement: e.target.value })} className="field" /></label>
+            <label className="space-y-1 block"><span className="field-label">Solution overview *</span><textarea rows={3} value={editForm.solutionOverview || ''} onChange={(e) => setEditForm({ ...editForm, solutionOverview: e.target.value })} className="field" /></label>
+            <div className="rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
+              <div className="field-label">PPT / Pitch deck</div>
+              {editForm.pitchDeckUrl ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <a href={deckHref(editForm.pitchDeckUrl) || '#'} target="_blank" rel="noreferrer" className="font-mono text-xs text-emerald-600 dark:text-emerald-300 break-all">View current PPT</a>
+                  <button onClick={() => setEditForm((p) => ({ ...p, pitchDeckUrl: '' }))} className="px-3 py-1.5 rounded-full font-mono text-[11px] font-bold border border-rose-500/50 text-rose-500">Remove PPT</button>
+                </div>
+              ) : <p className="font-mono text-xs opacity-50">No PPT attached.</p>}
+              <input value={editForm.pitchDeckUrl || ''} onChange={(e) => setEditForm({ ...editForm, pitchDeckUrl: e.target.value })} className="field" placeholder="https://… or /uploads/…" />
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-mono text-[11px] font-bold border border-black/10 dark:border-white/15 cursor-pointer hover:border-emerald-500">
+                <i className="fa-solid fa-upload" /> {deckBusy ? 'Uploading…' : 'Upload PPT'}
+                <input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx" onChange={onDeckFile} className="hidden" />
+              </label>
+            </div>
+            <label className="space-y-1 block"><span className="field-label">Admin notes</span><input value={editForm.notes || ''} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className="field" /></label>
+            <div className="flex gap-2">
+              <Button variant="gold" disabled={editBusy} onClick={saveFullEdit}>{editBusy ? 'Saving…' : 'Save changes'}</Button>
+              <Button variant="secondary" onClick={() => setEditingReg(null)}>Cancel</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

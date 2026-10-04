@@ -38,6 +38,36 @@ export const api = {
     req(`/api/registrations?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&page=${page}&limit=${limit}`),
   updateRegistration: (id, patch) => req(`/api/registrations/${id}`, { method: 'PATCH', body: patch }),
   deleteRegistration: (id) => req(`/api/registrations/${id}`, { method: 'DELETE' }),
+  bulkStatus: (ids, status) => req('/api/registrations/bulk-status', { method: 'PATCH', body: { ids, status } }),
+  bulkDelete: (ids) => req('/api/registrations/bulk-delete', { method: 'POST', body: { ids } }),
+  importPreview: async (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${BASE}/api/registrations/import-preview`, {
+      method: 'POST',
+      headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
+      body: fd,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not parse Excel file');
+    return data;
+  },
+  importConfirm: (rows, mapping) => req('/api/registrations/import', { method: 'POST', body: { rows, mapping } }),
+  exportSelected: async (ids) => {
+    const t = getToken();
+    const qs = ids && ids.length ? `?ids=${encodeURIComponent(ids.join(','))}` : '';
+    const res = await fetch(`${BASE}/api/registrations/export${qs}`, {
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = ids && ids.length ? 'sebc-registrations-selected.csv' : 'sebc-registrations.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
   exportRegistrations: async () => {
     const t = getToken();
     const res = await fetch(`${BASE}/api/registrations/export`, {
@@ -113,6 +143,10 @@ export const api = {
   checkinLookup: () => req('/api/checkin/lookup'),
   checkinStatus: () => req('/api/checkin/admin/status'),
   checkinTeams: () => req('/api/checkin/admin/teams'),
+  checkinManual: (id) => req(`/api/checkin/admin/checkin/${id}`, { method: 'POST' }),
+  checkinUndo: (id) => req(`/api/checkin/admin/undo/${id}`, { method: 'POST' }),
+  checkinDeleteTeam: (id) => req(`/api/checkin/admin/teams/${id}`, { method: 'DELETE' }),
+  checkinFixIndexes: () => req('/api/checkin/admin/fix-indexes', { method: 'POST' }),
 
   // ---- QR #2: peer feedback (public + admin) ----
   feedbackActive: () => req('/api/feedback/active'),
@@ -121,6 +155,8 @@ export const api = {
   feedbackAdminStatus: () => req('/api/feedback/admin/status'),
   feedbackAdminStart: (teamNumber) => req('/api/feedback/admin/start', { method: 'POST', body: { teamNumber } }),
   feedbackAdminClose: () => req('/api/feedback/admin/close', { method: 'POST' }),
+  feedbackAdminDeleteTeam: (teamNumber) => req(`/api/feedback/admin/by-team/${encodeURIComponent(teamNumber)}`, { method: 'DELETE' }),
+  feedbackAdminDeleteAll: () => req('/api/feedback/admin/all', { method: 'DELETE' }),
   feedbackAdminResults: (sessionId = '') =>
     req(`/api/feedback/admin/results${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ''}`),
   feedbackAdminResultsByTeam: (teamNumber) =>

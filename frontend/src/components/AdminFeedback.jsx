@@ -17,6 +17,7 @@ export const FeedbackTab = ({ notify }) => {
   const [teams, setTeams] = useState({ checkedIn: [] });
   const [pick, setPick] = useState('');
   const [busy, setBusy] = useState(false);
+  const [busyDelete, setBusyDelete] = useState('');
   const [exportingTeam, setExportingTeam] = useState('');
   const [exportingAll, setExportingAll] = useState(false);
   const [fullQr, setFullQr] = useState(false);
@@ -137,6 +138,30 @@ export const FeedbackTab = ({ notify }) => {
     setExportingAll(false);
   };
 
+  const deleteTeam = async (teamNumber) => {
+    if (!window.confirm(`Delete ALL feedback for TEAM ${String(teamNumber).padStart(2, '0')}? Sessions + responses will be removed. Cannot be undone.`)) return;
+    setBusyDelete(`team-${teamNumber}`);
+    try {
+      const d = await api.feedbackAdminDeleteTeam(teamNumber);
+      notify('ok', `Deleted TEAM ${String(teamNumber).padStart(2, '0')} — ${d.deletedFeedback} responses, ${d.deletedSessions} sessions`);
+      if (String(selectedTeam) === String(teamNumber)) { setSelectedTeam(''); setResults(null); }
+      load();
+    } catch (e) { notify('error', e.message); }
+    setBusyDelete('');
+  };
+
+  const deleteAll = async () => {
+    if (!window.confirm(`Delete feedback for ALL teams (${grouped.length} teams)? Everything in history will be removed. Cannot be undone.`)) return;
+    setBusyDelete('all');
+    try {
+      const d = await api.feedbackAdminDeleteAll();
+      notify('ok', `Deleted all — ${d.deletedFeedback} responses, ${d.deletedSessions} sessions`);
+      setSelectedTeam(''); setResults(null);
+      load();
+    } catch (e) { notify('error', e.message); }
+    setBusyDelete('');
+  };
+
   const url = typeof window !== 'undefined' ? feedbackQrUrl() : '';
   const presenting = status && status.active ? status.presenting : null;
 
@@ -213,11 +238,17 @@ export const FeedbackTab = ({ notify }) => {
       </Card>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h3 className="font-display font-bold">Team feedback history</h3>
-          <Button variant="gold" onClick={downloadAll} disabled={exportingAll || grouped.length === 0} className="!py-2 !px-4 !text-[11px]">
-            <i className="fa-solid fa-download" /> {exportingAll ? 'Preparing…' : 'Merge all & Download Excel'}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="gold" onClick={downloadAll} disabled={exportingAll || grouped.length === 0} className="!py-2 !px-4 !text-[11px]">
+              <i className="fa-solid fa-download" /> {exportingAll ? 'Preparing…' : 'Merge all & Download Excel'}
+            </Button>
+            <button disabled={busyDelete === 'all' || grouped.length === 0} onClick={deleteAll}
+              className="px-4 py-2 rounded-full font-mono text-[11px] font-bold border border-rose-500/50 text-rose-500 hover:bg-rose-500/10 transition disabled:opacity-40">
+              <i className="fa-solid fa-trash" /> {busyDelete === 'all' ? 'Deleting…' : 'Delete all'}
+            </button>
+          </div>
         </div>
         {grouped.length === 0 ? (
           <Card hairline><p className="font-mono text-xs opacity-60">No sessions yet. Start Team 1 above.</p></Card>
@@ -240,9 +271,15 @@ export const FeedbackTab = ({ notify }) => {
                       {g.hasActive ? 'ACTIVE' : 'CLOSED'} · {g.responses} responses · {g.sessions.length} session{g.sessions.length > 1 ? 's' : ''}
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => review(g.teamNumber)} className="!py-2 !px-4 !text-[11px]">
-                    {isOpen ? 'Hide feedback' : 'View feedback'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => review(g.teamNumber)} className="!py-2 !px-4 !text-[11px]">
+                      {isOpen ? 'Hide feedback' : 'View feedback'}
+                    </Button>
+                    <button disabled={busyDelete === `team-${g.teamNumber}`} onClick={() => deleteTeam(g.teamNumber)} title={`Delete all feedback for TEAM ${String(g.teamNumber).padStart(2, '0')}`}
+                      className="w-9 h-9 rounded-full border border-black/10 dark:border-white/15 text-xs opacity-60 hover:opacity-100 hover:text-rose-500 hover:border-rose-500 transition disabled:opacity-40 shrink-0">
+                      <i className="fa-solid fa-trash" />
+                    </button>
+                  </div>
                 </div>
 
                 {isOpen && (
@@ -273,7 +310,7 @@ export const FeedbackTab = ({ notify }) => {
                     </div>
                     <div className="flex-1 min-w-0 space-y-2 max-h-96 overflow-y-auto pt-3">
                       <div className="font-mono text-[11px] uppercase opacity-60">
-                        All feedback · {details ? details.total : s.responses} responses
+                        All feedback · {details ? details.total : g.responses} responses
                       </div>
                       {(details && details.items ? details.items : []).map((f) => (
                         <div key={f._id} className="rounded-xl border border-black/10 dark:border-white/10 p-3 text-xs space-y-1">
