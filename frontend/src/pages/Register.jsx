@@ -291,7 +291,7 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-5">
-                    <Field label="Full name" req><input name="fullName" required value={formData.fullName} onChange={handleChange} placeholder="e.g. Aarav Sharma" className="field" /></Field>
+                    <Field label="Team leader name" req><input name="fullName" required value={formData.fullName} onChange={handleChange} placeholder="e.g. Aarav Sharma" className="field" /></Field>
                     <Field label="Sandip PRN / Roll no." req><input name="prn" required value={formData.prn} onChange={handleChange} placeholder="e.g. 220101234001" className="field" /></Field>
                     <Field label="School / Institute" span>
                       <select name="school" value={formData.school} onChange={handleChange} className="field">
@@ -342,8 +342,8 @@ SLIDE 6: CURRENT PROGRESS & ROADMAP
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-5">
-                    {/* Idea Title */}
-                    <Field label="Idea Title" req span>
+                    {/* Team Name */}
+                    <Field label="Team name" req span>
                       <input name="ideaTitle" required value={formData.ideaTitle} onChange={handleChange} placeholder="e.g. Hostel food-waste tracker" className="field" />
                     </Field>
 

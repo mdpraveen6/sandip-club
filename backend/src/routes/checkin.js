@@ -157,11 +157,11 @@ router.post('/', requireDb, async (req, res) => {
     const ideaTitle = norm(req.body.ideaTitle);
     const leaderName = norm(req.body.leaderName);
     if (!ideaTitle || !leaderName) {
-      return res.status(400).json({ error: 'Idea & deck name and Founder name are required' });
+      return res.status(400).json({ error: 'Team name and Team leader name are required' });
     }
     const match = await findMatch(ideaTitle, leaderName);
     if (!match) {
-      return res.status(404).json({ error: 'No matching registration found. Check Idea & deck name and Founder spelling.' });
+      return res.status(404).json({ error: 'No matching registration found. Check Team name and Team leader spelling.' });
     }
     // Idempotent duplicate: already checked in -> return same number, no new allocation.
     if (match.teamNumber != null) {
@@ -186,18 +186,25 @@ router.post('/', requireDb, async (req, res) => {
   }
 });
 
-// GET /api/checkin/lookup — public, minimal autocomplete data only.
-// Returns [{ ideaTitle, founderName }] for eligible (pending/shortlisted/accepted) registrations.
+// GET /api/checkin/lookup — public, minimal autocomplete + selectable log data only.
+// Returns [{ ideaTitle, founderName, leaderName, teamNumber, checkedIn }]
+// for eligible (pending/shortlisted/accepted) registrations.
 // No emails, phones, or other sensitive fields.
 router.get('/lookup', requireDb, async (req, res) => {
   try {
     const items = await Registration.find({ status: { $in: ELIGIBLE_STATUSES } })
-      .select('ideaTitle fullName')
+      .select('ideaTitle fullName teamNumber checkinStatus')
       .sort({ ideaTitle: 1 })
       .limit(500)
       .lean();
     return res.json({
-      items: items.map((r) => ({ ideaTitle: r.ideaTitle, founderName: r.fullName })),
+      items: items.map((r) => ({
+        ideaTitle: r.ideaTitle,
+        founderName: r.fullName,
+        leaderName: r.fullName,
+        teamNumber: r.teamNumber ?? null,
+        checkedIn: r.teamNumber != null,
+      })),
     });
   } catch (err) {
     console.error('[checkin:lookup]', err.message);
